@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './App.css'
-import { useBoardContext } from './BoardContext'
 import Cell from './components/Cell'
+import { useBoardContext } from './context/BoardContext'
 
 const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45', 'brown'] as const
 

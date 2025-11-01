@@ -1,4 +1,4 @@
-import { useBoardContext } from '../BoardContext'
+import { useBoardContext } from '../context/BoardContext'
 
 interface CellProps {
 	row: number
