@@ -21,9 +21,9 @@ function Cell({ row, col, changeColour }: CellProps) {
 	})
 
 	const handleClickCell = () => {
-		console.log('Cell clicked at:', row, col)
-
 		if (changeColour) {
+			// If the new colour is the same as the current, return early
+			if (changeColour === cells[row][col].colour) return
 			setCell(row, col, { colour: changeColour })
 			updateMutation.mutate({ row, col, newState: { colour: changeColour } })
 		} else {

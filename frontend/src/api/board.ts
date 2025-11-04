@@ -1,5 +1,4 @@
 import type { CellContextType } from '../context/BoardContext'
-import { getCookie } from './utils'
 
 export async function getBoard(): Promise<CellContextType[][]> {
 	const response = await fetch('http://localhost:8000/api/getBoard')
@@ -11,8 +10,7 @@ export async function createBoard(rows: number, cols: number): Promise<CellConte
 		method: 'POST',
 		credentials: 'include',
 		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRFToken': getCookie('csrftoken') || ''
+			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({ rows, cols })
 	})
@@ -25,8 +23,7 @@ export async function updateCell(row: number, col: number, newState: Partial<Cel
 		method: 'PUT',
 		credentials: 'include',
 		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRFToken': getCookie('csrftoken') || ''
+			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({ row, col, ...newState })
 	})
