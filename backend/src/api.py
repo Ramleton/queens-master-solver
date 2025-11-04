@@ -27,6 +27,8 @@ def get_board(request):
 
 @api.post("/createBoard")
 def create_board(request, body: CreateBoardRequest):
+	if body.rows <= 0 or body.rows > 10 or body.cols <= 0 or body.cols > 10:
+		return 400
 	global current_board
 	grid = [[Cell(colour='white', state=CellState.EMPTY) for _ in range(body.cols)] for _ in range(body.rows)]
 	current_board = Board(rows=body.rows, cols=body.cols, grid=grid)
