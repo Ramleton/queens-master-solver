@@ -47,7 +47,7 @@ function Cell({ row, col, changeColour }: CellProps) {
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div
 			onClick={() => handleClickCell()}
-			className='grid-cell square'
+			className='square'
 			style={{
 				'--colour': cells[row][col].colour
 			} as React.CSSProperties}

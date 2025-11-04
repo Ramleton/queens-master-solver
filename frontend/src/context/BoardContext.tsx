@@ -32,6 +32,7 @@ interface BoardContext {
 
 const BoardContext = React.createContext<BoardContext | null>(null)
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useBoardContext = () => {
 	const context = React.useContext(BoardContext)
 	if (!context) {
