@@ -19,7 +19,11 @@ class UpdateCellRequest(Schema):
 
 @api.get("/getBoard")
 def get_board(request):
-	return current_board
+	global current_board
+	if current_board is None:
+		grid = [[Cell(colour='white', state=CellState.EMPTY) for _ in range(8)] for _ in range(8)]
+		current_board = Board(rows=8, cols=8, grid=grid)
+	return current_board.model_dump().get('grid')
 
 @api.post("/createBoard")
 def create_board(request, body: CreateBoardRequest):

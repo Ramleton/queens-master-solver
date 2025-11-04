@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createBoard, getBoard, solve } from './api/board'
 import './App.css'
 import Cell from './components/Cell'
@@ -9,7 +9,7 @@ const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
-	const { rows, cols, setRows, setCols } = useBoardContext()
+	const { rows, cols, setRows, setCols, setCells } = useBoardContext()
 
 	const queryClient = useQueryClient()
 
@@ -17,6 +17,12 @@ function App() {
 		queryKey: ['board'],
 		queryFn: getBoard
 	})
+
+	useEffect(() => {
+		if (status === 'success') {
+			setCells(data)
+		}
+	}, [data, status, setCells])
 
 	const solveMutation = useMutation({
 		mutationFn: solve,
