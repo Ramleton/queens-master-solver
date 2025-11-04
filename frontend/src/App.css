@@ -12,6 +12,10 @@
 
 .grid-cell {}
 
+.selected {
+	border: 4px solid greenyellow;
+}
+
 .colours-flex {
 	display: flex;
 	justify-content: center;

@@ -1,8 +1,8 @@
 import React from 'react'
 
-type CellState = 'empty' | 'queen' | 'marked'
+export type CellState = 'empty' | 'queen' | 'marked'
 
-interface CellContextType {
+export interface CellContextType {
 	colour: string
 	state: CellState
 }
@@ -25,6 +25,7 @@ interface BoardContext {
 	rows: number
 	cols: number
 	setCell: (row: number, col: number, newState: Partial<CellContextType>) => void
+	setCells: (cells: CellContextType[][]) => void
 	setRows: (rows: number) => void
 	setCols: (cols: number) => void
 }
@@ -68,7 +69,7 @@ export const BoardProvider = ({ children }: { children: React.ReactNode }) => {
 	}
 
 	return (
-		<BoardContext.Provider value={{ cells, rows, cols, setCell, setRows, setCols }}>
+		<BoardContext.Provider value={{ cells, rows, cols, setCell, setCells, setRows, setCols }}>
 			{children}
 		</BoardContext.Provider>
 	)

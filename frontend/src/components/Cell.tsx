@@ -1,4 +1,6 @@
-import { useBoardContext } from '../context/BoardContext'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateCell } from '../api/board'
+import { useBoardContext, type CellContextType, type CellState } from '../context/BoardContext'
 
 interface CellProps {
 	row: number
@@ -7,27 +9,37 @@ interface CellProps {
 }
 
 function Cell({ row, col, changeColour }: CellProps) {
+	const queryClient = useQueryClient()
 	const { setCell, cells } = useBoardContext()
+
+	const updateMutation = useMutation({
+		mutationFn: ({ row, col, newState }: { row: number, col: number, newState: Partial<CellContextType> }) => updateCell(row, col, newState),
+		onSuccess: async response => {
+			console.log(response)
+			await queryClient.invalidateQueries({ queryKey: ['board'] })
+		}
+	})
 
 	const handleClickCell = () => {
 		console.log('Cell clicked at:', row, col)
 
 		if (changeColour) {
 			setCell(row, col, { colour: changeColour })
+			updateMutation.mutate({ row, col, newState: { colour: changeColour } })
 		} else {
+			let updatedState: CellState = 'empty'
 			switch (cells[row][col].state) {
 				case 'empty':
-					setCell(row, col, { state: 'marked' })
+					updatedState = 'marked'
 					break
 				case 'marked':
-					setCell(row, col, { state: 'queen' })
-					break
-				case 'queen':
-					setCell(row, col, { state: 'empty' })
+					updatedState = 'queen'
 					break
 				default:
 					break
 			}
+			setCell(row, col, { ...cells[row][col], state: updatedState })
+			updateMutation.mutate({ row, col, newState: { state: updatedState } })
 		}
 	}
 
