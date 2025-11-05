@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateCell } from '../api/board'
-import { useBoardContext, type CellContextType, type CellState } from '../context/BoardContext'
+import { useBoardContext, type CellState } from '../context/BoardContext'
+import marked from '/marked.png'
+import queen from '/queen.png'
 
 interface CellProps {
 	row: number
@@ -9,23 +9,13 @@ interface CellProps {
 }
 
 function Cell({ row, col, changeColour }: CellProps) {
-	const queryClient = useQueryClient()
 	const { setCell, cells } = useBoardContext()
-
-	const updateMutation = useMutation({
-		mutationFn: ({ row, col, newState }: { row: number, col: number, newState: Partial<CellContextType> }) => updateCell(row, col, newState),
-		onSuccess: async response => {
-			console.log(response)
-			await queryClient.invalidateQueries({ queryKey: ['board'] })
-		}
-	})
 
 	const handleClickCell = () => {
 		if (changeColour) {
 			// If the new colour is the same as the current, return early
 			if (changeColour === cells[row][col].colour) return
 			setCell(row, col, { colour: changeColour })
-			updateMutation.mutate({ row, col, newState: { colour: changeColour } })
 		} else {
 			let updatedState: CellState = 'empty'
 			switch (cells[row][col].state) {
@@ -39,7 +29,6 @@ function Cell({ row, col, changeColour }: CellProps) {
 					break
 			}
 			setCell(row, col, { ...cells[row][col], state: updatedState })
-			updateMutation.mutate({ row, col, newState: { state: updatedState } })
 		}
 	}
 
@@ -52,8 +41,8 @@ function Cell({ row, col, changeColour }: CellProps) {
 				'--colour': cells[row][col].colour
 			} as React.CSSProperties}
 		>
-			{cells[row][col].state === 'marked' && <img className='cell-image' src='./marked.png' alt='marked' />}
-			{cells[row][col].state === 'queen' && <img className='cell-image' src='./queen.png' alt='queen' />}
+			{cells[row][col].state === 'marked' && <img className='cell-image' src={marked} alt='marked' />}
+			{cells[row][col].state === 'queen' && <img className='cell-image' src={queen} alt='queen' />}
 		</div>
 	)
 }

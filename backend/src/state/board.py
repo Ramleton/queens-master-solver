@@ -15,3 +15,6 @@ class Board(BaseModel):
 	rows: int
 	cols: int
 	grid: List[List[Cell]]
+
+	def __init__(self, rows: int, cols: int, grid: List[List[Cell]]):
+		super().__init__(rows=rows, cols=cols, grid=grid)

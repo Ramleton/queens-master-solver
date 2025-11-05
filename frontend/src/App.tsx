@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import React, { useEffect, useState } from 'react'
-import { createBoard, getBoard, solve } from './api/board'
+import { useMutation } from '@tanstack/react-query'
+import React, { useState } from 'react'
+import { solve } from './api/board'
 import './App.css'
 import Cell from './components/Cell'
 import { useBoardContext } from './context/BoardContext'
@@ -9,34 +9,14 @@ const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
-	const { rows, cols, setRows, setCols, setCells } = useBoardContext()
-
-	const queryClient = useQueryClient()
-
-	const { data, status, isFetching } = useQuery({
-		queryKey: ['board'],
-		queryFn: getBoard
-	})
-
-	useEffect(() => {
-		if (status === 'success') {
-			setCells(data)
-		}
-	}, [data, status, setCells])
+	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
 
 	const solveMutation = useMutation({
-		mutationFn: solve,
-		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['board'] })
+		mutationFn: async () => await solve(rows, cols, cells),
+		onSuccess: response => {
 			console.log('Solved!')
 			setChangeColour(null)
-		}
-	})
-
-	const createMutation = useMutation({
-		mutationFn: ({ rows, cols }: { rows: number, cols: number }) => createBoard(rows, cols),
-		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['board'] })
+			setCells(response)
 		}
 	})
 
@@ -48,34 +28,20 @@ function App() {
 		solveMutation.mutate()
 	}
 
-	if (status === 'pending') {
-		return <p>Loading...</p>
-	}
-
-	if (status === 'error') {
-		return <p>Error loading board</p>
-	}
-
 	return (
 		<>
 			<h1>Queens Master Solver</h1>
 			<input
 				type='number'
 				value={rows}
-				onChange={e => {
-					createMutation.mutate({ rows: parseInt(e.target.value), cols })
-					setRows(parseInt(e.target.value))
-				}}
+				onChange={e => setRows(parseInt(e.target.value))}
 				min={1}
 				max={10}
 			/>
 			<input
 				type='number'
 				value={cols}
-				onChange={e => {
-					createMutation.mutate({ rows, cols: parseInt(e.target.value) })
-					setCols(parseInt(e.target.value))
-				}}
+				onChange={e => setCols(parseInt(e.target.value))}
 				min={1}
 				max={10}
 			/>
@@ -105,7 +71,7 @@ function App() {
 					// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 					<div
 						key={index}
-						className={`colour-cell square ${changeColour === colour ? 'selected' : ''}`}
+						className={`colour-cell ${changeColour === colour ? 'selected' : ''} square`}
 						style={{
 							'--colour': colour
 						} as React.CSSProperties}
@@ -114,8 +80,6 @@ function App() {
 				))}
 			</div>
 			<button type='button' onClick={handleSolve}>Solve</button>
-
-			{ isFetching && <p>Refreshing the board...</p>}
 		</>
 	)
 }

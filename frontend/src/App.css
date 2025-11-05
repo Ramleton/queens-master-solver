@@ -11,7 +11,7 @@
 }
 
 .selected {
-	border: 4px solid greenyellow;
+	border: 2px solid greenyellow !important;
 }
 
 .colours-flex {
@@ -24,6 +24,7 @@
 .colour-cell {
 	width: 50px;
 	height: 50px;
+	border: 2px solid black;
 }
 
 .cell-image {
