@@ -1,5 +1,4 @@
 from src.state.board import Board, Cell, CellState
-import sys
 import copy
 
 class BoardSolver:
@@ -91,8 +90,6 @@ class BoardSolver:
 
 		# Mark all unmarked cells that have the same colour
 		self._mark_cells_of_same_colour(self.board.grid[row][col].colour)
-
-		self._check_steps()
 	
 	def _check_queens(self):
 		for row in range(self.board.rows):
@@ -117,6 +114,18 @@ class BoardSolver:
 	def _check_queen_would_conflict(self, row: int, col: int):
 		unmarked_colours = copy.deepcopy(self.unmarked_colour_dict)
 		unmarked_colour_cells = self._flatten(list(unmarked_colours.values()))
+		# self.board.print()
+		# Temporarily mark all cells in the same row
+		for other_col in range(self.board.cols):
+			if other_col != col and self._check_cell_empty(row, other_col):
+				unmarked_colours[self.board.grid[row][other_col].colour].remove((row, other_col))
+				unmarked_colour_cells.remove((row, other_col))
+		# Temporarily mark all cells in the same column
+		for other_row in range(self.board.rows):
+			if other_row != row and self._check_cell_empty(other_row, col):
+				unmarked_colours[self.board.grid[other_row][col].colour].remove((other_row, col))
+				unmarked_colour_cells.remove((other_row, col))
+		# Temporarily mark adjacent cells
 		for other_row in range(row - 1, row + 2):
 			for other_col in range(col - 1, col + 2):
 				if other_row < 0 or other_row >= self.board.rows or \
@@ -125,6 +134,9 @@ class BoardSolver:
 				if (other_row, other_col) in unmarked_colour_cells and \
 					self.board.grid[other_row][other_col].colour != self.board.grid[row][col].colour:
 					unmarked_colours[self.board.grid[other_row][other_col].colour].remove((other_row, other_col))
+					unmarked_colour_cells.remove((other_row, other_col))
+		# Check if a colour has no unmarked cells and has no queens
+		# If so, this is a conflict
 		for colour in unmarked_colours:
 			if not self.colours_queen_dict[colour] and not len(unmarked_colours[colour]):
 				self._mark_cell_as_marked(row, col)
@@ -133,34 +145,44 @@ class BoardSolver:
 				return self._check_steps()
 
 	def _check_cells_iterative(self):
-		for (row, col) in self._flatten(list(self.unmarked_colour_dict.values())):
-			self._check_queen_would_conflict(row, col)
-
+		for row in range(self.board.rows):
+			for col in range(self.board.cols):
+				if self._check_cell_empty(row, col):
+					self._check_queen_would_conflict(row, col)
+		# (row, col) = self._flatten(list(self.unmarked_colour_dict.values())).pop()
+		# # print(f"Checking {row}, {col}")
+		# self._check_queen_would_conflict(row, col)
+	
+	def _check_colour_row_helper(self, colour):
+		row = None
+		for (cell_row, _) in self.unmarked_colour_dict[colour]:
+				if row == None:
+					row = cell_row
+				elif row != cell_row:
+					return None
+		return row
 
 	def _check_colour_row(self):
-		for colour in self.unmarked_colour_dict:
-			row = None
-			for cell in self.unmarked_colour_dict[colour]:
-				if row == None:
-					row = cell[0]
-				elif row != cell[0]:
-					return
-			# Getting this far means all cells of the same colour are in the same row
-			# Mark all cells of other colours in the same row
+		for colour in self.unmarked_colour_dict.keys():
+			row = self._check_colour_row_helper(colour)
 			for col in range(self.board.cols):
 				if row is not None and \
 					self._check_cell_empty(row, col) and \
 					self.board.grid[row][col].colour != colour:
 					self._mark_cell_as_marked(row, col)
 
+	def _check_colour_column_helper(self, colour):
+		col = None
+		for (_, cell_col) in self.unmarked_colour_dict[colour]:
+				if col == None:
+					col = cell_col
+				elif col != cell_col:
+					return None
+		return col
+
 	def _check_colour_column(self):
 		for colour in self.unmarked_colour_dict:
-			column = None
-			for cell in self.unmarked_colour_dict[colour]:
-				if column == None:
-					column = cell[1]
-				elif column != cell[1]:
-					return
+			column = self._check_colour_column_helper(colour)
 			# Getting this far means all cells of the same colour are in the same column
 			# Mark all cells of other colours in the same column
 			for row in range(self.board.rows):
@@ -176,6 +198,6 @@ class BoardSolver:
 		self._check_cells_iterative()
 	
 	def solve(self):
-		# sys.setrecursionlimit(44)
 		self._check_queens()
-		self._check_steps()
+		for _ in range(10):
+			self._check_steps()
