@@ -14,13 +14,16 @@ class BoardSolver:
 		for row in range(self.board.rows):
 			for col in range(self.board.cols):
 				# Add all colours to colours_queen_dict
+				if self.unmarked_colour_dict.get(self.board.grid[row][col].colour) is None:
+					self.unmarked_colour_dict[self.board.grid[row][col].colour] = []
 				if self.colours_queen_dict.get(self.board.grid[row][col].colour) is None:
 					self.colours_queen_dict[self.board.grid[row][col].colour] = False
 				# Add all unmarked cells to unmarked_colour_dict
-				if self.board.grid[row][col].state != CellState.MARKED:
-					self.unmarked_colour_dict\
-						.setdefault(self.board.grid[row][col].colour, [])\
+				if self.board.grid[row][col].state == CellState.EMPTY:
+					self.unmarked_colour_dict[self.board.grid[row][col].colour]\
 						.append((row, col))
+				if self.board.grid[row][col].state == CellState.QUEEN:
+					self.colours_queen_dict[self.board.grid[row][col].colour] = True
 	
 	def _check_cell_empty(self, row: int, col: int):
 		return self.board.grid[row][col].state == CellState.EMPTY
@@ -72,7 +75,7 @@ class BoardSolver:
 				self._mark_cell_as_marked(other_row, other_col)
 	
 	def _mark_cells_of_same_colour(self, colour: str):
-		for (row, col) in self.unmarked_colour_dict[colour]:
+		for (row, col) in copy.deepcopy(self.unmarked_colour_dict[colour]):
 			if self._check_cell_empty(row, col):
 				self._mark_cell_as_marked(row, col)
 
@@ -119,23 +122,57 @@ class BoardSolver:
 				if other_row < 0 or other_row >= self.board.rows or \
 					other_col < 0 or other_col >= self.board.cols:
 					continue
-				if (other_row, other_col) in unmarked_colour_cells:
+				if (other_row, other_col) in unmarked_colour_cells and \
+					self.board.grid[other_row][other_col].colour != self.board.grid[row][col].colour:
 					unmarked_colours[self.board.grid[other_row][other_col].colour].remove((other_row, other_col))
 		for colour in unmarked_colours:
 			if not self.colours_queen_dict[colour] and not len(unmarked_colours[colour]):
 				self._mark_cell_as_marked(row, col)
 				# Check if there is a single unmarked colour before iterating again
 				# This is to prevent accidentally removing the only viable cell left of a colour
-				return self._check_single_colour()
-				
-	
+				return self._check_steps()
+
 	def _check_cells_iterative(self):
 		for (row, col) in self._flatten(list(self.unmarked_colour_dict.values())):
 			self._check_queen_would_conflict(row, col)
-				
+
+
+	def _check_colour_row(self):
+		for colour in self.unmarked_colour_dict:
+			row = None
+			for cell in self.unmarked_colour_dict[colour]:
+				if row == None:
+					row = cell[0]
+				elif row != cell[0]:
+					return
+			# Getting this far means all cells of the same colour are in the same row
+			# Mark all cells of other colours in the same row
+			for col in range(self.board.cols):
+				if row is not None and \
+					self._check_cell_empty(row, col) and \
+					self.board.grid[row][col].colour != colour:
+					self._mark_cell_as_marked(row, col)
+
+	def _check_colour_column(self):
+		for colour in self.unmarked_colour_dict:
+			column = None
+			for cell in self.unmarked_colour_dict[colour]:
+				if column == None:
+					column = cell[1]
+				elif column != cell[1]:
+					return
+			# Getting this far means all cells of the same colour are in the same column
+			# Mark all cells of other colours in the same column
+			for row in range(self.board.rows):
+				if column is not None and \
+					self._check_cell_empty(row, column) and \
+					self.board.grid[row][column].colour != colour:
+					self._mark_cell_as_marked(row, column)
 
 	def _check_steps(self):
 		self._check_single_colour()
+		self._check_colour_row()
+		self._check_colour_column()
 		self._check_cells_iterative()
 	
 	def solve(self):
