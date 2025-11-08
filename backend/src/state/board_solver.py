@@ -3,7 +3,7 @@ from src.state.axis import Axis
 
 class BoardSolver:
 	board: Board
-	unmarked_colour_dict: dict[str, list[tuple[int, int]]]
+	unmarked_colour_dict: dict[str, list[tuple[int, int]]] # list(row, col)
 	colours_queen_dict: dict[str, bool]
 	colours_to_rc: dict[str, tuple[dict[int, int], dict[int, int]]]
 
@@ -236,6 +236,63 @@ class BoardSolver:
 				(row, col) = self.unmarked_colour_dict[colour][0]
 				self._mark_cell_as_queen(row, col)
 				self._mark_cells_around_queen(row, col)
+	
+	def _snapshot(self):
+		"""
+		Takes a snapshot of the current board state by cloning the board.
+
+		Returns:
+			Board: A cloned version of the current board state.
+		"""
+		return (
+			self.board.clone(),
+			{c: list(v) for c, v in self.unmarked_colour_dict.items()},
+			dict(self.colours_queen_dict),
+			{colour: (dict(r), dict(c)) for colour, (r, c) in self.colours_to_rc.items()}
+		)
+
+	def _restore(self, snapshot):
+		"""
+		Restores the board state from a snapshot.
+
+		Parameters:
+			snapshot (Board): The snapshot to restore the board state from.
+		"""
+		board_copy, unmarked, queens, rc = snapshot
+		self.board.restore_from(board_copy)
+		self.unmarked_colour_dict = unmarked
+		self.colours_queen_dict = queens
+		self.colours_to_rc = rc
+	
+	def _check_backtrack_queen_conflicts(self, row: int, col: int):
+		"""
+		Checks if marking a cell as a queen would cause a conflict through potential backtracking.
+		
+		If marking the cell as a queen would cause a conflict, marks the cell as marked instead.
+		
+		Parameters:
+			row (int): The row of the cell to check.
+			col (int): The column of the cell to check.
+		
+		Raises:
+			ValueError: If marking the cell as a queen would cause a conflict.
+		"""
+		# Snapshot current state
+		snapshot = self._snapshot()
+
+		try:
+			# Attempt to proceed
+			self._mark_cell_as_queen(row, col)
+			self._check_steps()
+			# Check if a colour has no unmarked cells and has no queens
+			# If so, this is a conflict
+			for colour in self.unmarked_colour_dict.keys():
+				if not self.colours_queen_dict[colour] and not len(self.unmarked_colour_dict[colour]):
+					raise ValueError
+		except ValueError:
+			# Marking the cell as a queen would cause a conflict
+			self._restore(snapshot)
+			self._mark_cell_as_marked(row, col)
 
 	def _check_queen_would_conflict(self, row: int, col: int):
 		"""
@@ -245,6 +302,11 @@ class BoardSolver:
 		
 		Returns early if a conflict is found to prevent unnecessary checks.
 		"""
+		# Skip cells already known to be non-viable
+		if not self._check_cell_empty(row, col):
+			return
+
+		# Check if there are any conflicts
 		unmarked_colours = {c: list(v) for c, v in self.unmarked_colour_dict.items()}
 		unmarked_colour_cells = {cell for cells in unmarked_colours.values() for cell in cells}
 		# Temporarily mark all cells in the same row
@@ -275,6 +337,8 @@ class BoardSolver:
 				# Check if there is a single unmarked colour before iterating again
 				# This is to prevent accidentally removing the only viable cell left of a colour
 				return self._check_steps()
+		
+		self._check_backtrack_queen_conflicts(row, col)
 
 	def _check_cells_iterative(self):
 		"""
@@ -286,72 +350,6 @@ class BoardSolver:
 			for col in range(self.board.cols):
 				if self._check_cell_empty(row, col):
 					self._check_queen_would_conflict(row, col)
-	
-	# def _check_colour_row_helper(self, colour):
-	# 	"""
-	# 	Helper function to check if all unmarked cells of a colour are in the same row.
-		
-	# 	Args:
-	# 		colour (str): The colour to check.
-		
-	# 	Returns:
-	# 		int or None: The row number of all unmarked cells of the given colour, or None if they are not all in the same row.
-	# 	"""
-	# 	row = None
-	# 	for (cell_row, _) in self.unmarked_colour_dict[colour]:
-	# 		if row is None:
-	# 			row = cell_row
-	# 		elif row != cell_row:
-	# 			return None
-	# 	return row
-
-	# def _check_colour_row(self):
-	# 	"""
-	# 	Check if all unmarked cells of a colour are in the same row.
-	# 	If so, mark all cells in the same row that are not of this colour.
-	# 	This is to prevent accidentally removing the only viable cell left of a colour.
-	# 	"""
-	# 	for colour in self.unmarked_colour_dict.keys():
-	# 		row = self._check_colour_row_helper(colour)
-	# 		if row is None:
-	# 			continue
-	# 		for col in range(self.board.cols):
-	# 			if (
-	# 				self._check_cell_empty(row, col) and
-	# 				self.board.grid[row][col].colour != colour
-	# 			):
-	# 				self._mark_cell_as_marked(row, col)
-
-	# def _check_colour_column_helper(self, colour):
-	# 	"""
-	# 	Check if all cells in a colour are in the same column.
-
-	# 	Args:
-	# 		colour (str): The colour to check
-
-	# 	Returns:
-	# 		int: The column that all cells in the colour are in, or None if not all cells are in the same column.
-	# 	"""
-	# 	col = None
-	# 	for (_, cell_col) in self.unmarked_colour_dict[colour]:
-	# 		if col is None:
-	# 			col = cell_col
-	# 		elif col != cell_col:
-	# 			return None
-	# 	return col
-
-	# def _check_colour_column(self):
-	# 	"""Check if all cells in a colour are in the same column and mark cells that are not the same colour as marked."""
-	# 	for colour in self.unmarked_colour_dict:
-	# 		column = self._check_colour_column_helper(colour)
-	# 		if column is None:
-	# 			continue
-	# 		for row in range(self.board.rows):
-	# 			if (
-	# 				self._check_cell_empty(row, column) and
-	# 				self.board.grid[row][column].colour != colour
-	# 			):
-	# 				self._mark_cell_as_marked(row, column)
 	
 	def _sort_by_least(self):
 		"""
@@ -408,8 +406,7 @@ class BoardSolver:
 			# to the number of rows/columns to check
 			if num_same != len(group_to_check):
 				continue
-			print(colour, self.unmarked_colour_dict[colour], extra_colours)
-			# Mark the cells of the colours in the extra colours with matching columns
+			# Mark the cells of the colours in the extra colours with matching rows/columns
 			for o_colour in extra_colours:
 				for (row, column) in list(self.unmarked_colour_dict[o_colour]):
 					if axis == 1 and column in group_to_check:
@@ -428,6 +425,7 @@ class BoardSolver:
 		Returns:
 			None
 		"""
+		self._check_queens()
 		self._check_single_colour()
 		self._compare_groups(Axis.ROW)
 		self._compare_groups(Axis.COLUMN)
@@ -446,8 +444,6 @@ class BoardSolver:
 		return tuple(tuple(cell.state for cell in row) for row in self.board.grid)
 	
 	def solve(self):
-		self._check_queens()
-		# self._compare_groups(Axis.COLUMN)
 		prev_state = None
 		while prev_state != self._hash_state():
 			prev_state = self._hash_state()
