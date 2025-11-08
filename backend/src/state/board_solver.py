@@ -274,7 +274,7 @@ class BoardSolver:
 				self._mark_cell_as_marked(row, col)
 				# Check if there is a single unmarked colour before iterating again
 				# This is to prevent accidentally removing the only viable cell left of a colour
-				return
+				return self._check_steps()
 
 	def _check_cells_iterative(self):
 		"""
@@ -287,71 +287,71 @@ class BoardSolver:
 				if self._check_cell_empty(row, col):
 					self._check_queen_would_conflict(row, col)
 	
-	def _check_colour_row_helper(self, colour):
-		"""
-		Helper function to check if all unmarked cells of a colour are in the same row.
+	# def _check_colour_row_helper(self, colour):
+	# 	"""
+	# 	Helper function to check if all unmarked cells of a colour are in the same row.
 		
-		Args:
-			colour (str): The colour to check.
+	# 	Args:
+	# 		colour (str): The colour to check.
 		
-		Returns:
-			int or None: The row number of all unmarked cells of the given colour, or None if they are not all in the same row.
-		"""
-		row = None
-		for (cell_row, _) in self.unmarked_colour_dict[colour]:
-			if row is None:
-				row = cell_row
-			elif row != cell_row:
-				return None
-		return row
+	# 	Returns:
+	# 		int or None: The row number of all unmarked cells of the given colour, or None if they are not all in the same row.
+	# 	"""
+	# 	row = None
+	# 	for (cell_row, _) in self.unmarked_colour_dict[colour]:
+	# 		if row is None:
+	# 			row = cell_row
+	# 		elif row != cell_row:
+	# 			return None
+	# 	return row
 
-	def _check_colour_row(self):
-		"""
-		Check if all unmarked cells of a colour are in the same row.
-		If so, mark all cells in the same row that are not of this colour.
-		This is to prevent accidentally removing the only viable cell left of a colour.
-		"""
-		for colour in self.unmarked_colour_dict.keys():
-			row = self._check_colour_row_helper(colour)
-			if row is None:
-				continue
-			for col in range(self.board.cols):
-				if (
-					self._check_cell_empty(row, col) and
-					self.board.grid[row][col].colour != colour
-				):
-					self._mark_cell_as_marked(row, col)
+	# def _check_colour_row(self):
+	# 	"""
+	# 	Check if all unmarked cells of a colour are in the same row.
+	# 	If so, mark all cells in the same row that are not of this colour.
+	# 	This is to prevent accidentally removing the only viable cell left of a colour.
+	# 	"""
+	# 	for colour in self.unmarked_colour_dict.keys():
+	# 		row = self._check_colour_row_helper(colour)
+	# 		if row is None:
+	# 			continue
+	# 		for col in range(self.board.cols):
+	# 			if (
+	# 				self._check_cell_empty(row, col) and
+	# 				self.board.grid[row][col].colour != colour
+	# 			):
+	# 				self._mark_cell_as_marked(row, col)
 
-	def _check_colour_column_helper(self, colour):
-		"""
-		Check if all cells in a colour are in the same column.
+	# def _check_colour_column_helper(self, colour):
+	# 	"""
+	# 	Check if all cells in a colour are in the same column.
 
-		Args:
-			colour (str): The colour to check
+	# 	Args:
+	# 		colour (str): The colour to check
 
-		Returns:
-			int: The column that all cells in the colour are in, or None if not all cells are in the same column.
-		"""
-		col = None
-		for (_, cell_col) in self.unmarked_colour_dict[colour]:
-			if col is None:
-				col = cell_col
-			elif col != cell_col:
-				return None
-		return col
+	# 	Returns:
+	# 		int: The column that all cells in the colour are in, or None if not all cells are in the same column.
+	# 	"""
+	# 	col = None
+	# 	for (_, cell_col) in self.unmarked_colour_dict[colour]:
+	# 		if col is None:
+	# 			col = cell_col
+	# 		elif col != cell_col:
+	# 			return None
+	# 	return col
 
-	def _check_colour_column(self):
-		"""Check if all cells in a colour are in the same column and mark cells that are not the same colour as marked."""
-		for colour in self.unmarked_colour_dict:
-			column = self._check_colour_column_helper(colour)
-			if column is None:
-				continue
-			for row in range(self.board.rows):
-				if (
-					self._check_cell_empty(row, column) and
-					self.board.grid[row][column].colour != colour
-				):
-					self._mark_cell_as_marked(row, column)
+	# def _check_colour_column(self):
+	# 	"""Check if all cells in a colour are in the same column and mark cells that are not the same colour as marked."""
+	# 	for colour in self.unmarked_colour_dict:
+	# 		column = self._check_colour_column_helper(colour)
+	# 		if column is None:
+	# 			continue
+	# 		for row in range(self.board.rows):
+	# 			if (
+	# 				self._check_cell_empty(row, column) and
+	# 				self.board.grid[row][column].colour != colour
+	# 			):
+	# 				self._mark_cell_as_marked(row, column)
 	
 	def _sort_by_least(self):
 		"""
@@ -396,23 +396,26 @@ class BoardSolver:
 			# Move on if there are no columns to check
 			if not len(group_to_check):
 				continue
-			num_supersets = 1 # The colour itself is a superset
-			strict_supersets = set()
+			num_same = 1 # The number of sets we encounter that are equivalent
+			extra_colours = set()
 			for o_colour in sorted_colours:
 				o_group_to_check = self._find_group_to_compare(o_colour, axis)
-				if group_to_check.issubset(o_group_to_check):
-					num_supersets += 1
-					if len(o_group_to_check) > len(group_to_check):
-						strict_supersets.add(o_colour)
-			if strict_supersets and num_supersets > len(group_to_check):
-				# There is a strict superset of columns that are not a subset
-				# So, we mark the cells of the colours in the strict supersets with matching columns
-				for o_colour in strict_supersets:
-					for (row, column) in list(self.unmarked_colour_dict[o_colour]):
-						if axis == 1 and column in group_to_check:
-							self._mark_cell_as_marked(row, column)
-						elif axis == 0 and row in group_to_check:
-							self._mark_cell_as_marked(row, column)
+				if group_to_check == o_group_to_check:
+					num_same += 1
+				elif o_group_to_check.intersection(group_to_check):
+					extra_colours.add(o_colour)
+			# Move on if the number of colours with equivalent sets isn't equal
+			# to the number of rows/columns to check
+			if num_same != len(group_to_check):
+				continue
+			print(colour, self.unmarked_colour_dict[colour], extra_colours)
+			# Mark the cells of the colours in the extra colours with matching columns
+			for o_colour in extra_colours:
+				for (row, column) in list(self.unmarked_colour_dict[o_colour]):
+					if axis == 1 and column in group_to_check:
+						self._mark_cell_as_marked(row, column)
+					elif axis == 0 and row in group_to_check:
+						self._mark_cell_as_marked(row, column)
 
 	def _check_steps(self):
 		"""
@@ -426,11 +429,9 @@ class BoardSolver:
 			None
 		"""
 		self._check_single_colour()
-		self._check_colour_row()
-		self._check_colour_column()
-		self._check_cells_iterative()
 		self._compare_groups(Axis.ROW)
 		self._compare_groups(Axis.COLUMN)
+		self._check_cells_iterative()
 	
 	def _hash_state(self):
 		"""
@@ -446,7 +447,8 @@ class BoardSolver:
 	
 	def solve(self):
 		self._check_queens()
-		last_state = None
-		while last_state != self._hash_state():
+		# self._compare_groups(Axis.COLUMN)
+		prev_state = None
+		while prev_state != self._hash_state():
+			prev_state = self._hash_state()
 			self._check_steps()
-			last_state = self._hash_state()
