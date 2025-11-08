@@ -1,6 +1,6 @@
 import { useBoardContext, type CellState } from '../context/BoardContext'
 import marked from '/marked.png'
-import queen from '/queen.png'
+import queen from '/queen_2.png'
 
 interface CellProps {
 	row: number
@@ -41,8 +41,8 @@ function Cell({ row, col, changeColour }: CellProps) {
 				'--colour': cells[row][col].colour
 			} as React.CSSProperties}
 		>
-			{cells[row][col].state === 'marked' && <img className='cell-image' src={marked} alt='marked' />}
-			{cells[row][col].state === 'queen' && <img className='cell-image' src={queen} alt='queen' />}
+			{cells[row][col].state === 'marked' && <img className='cell-image marked' src={marked} alt='marked' />}
+			{cells[row][col].state === 'queen' && <img className='cell-image queen' src={queen} alt='queen' />}
 		</div>
 	)
 }

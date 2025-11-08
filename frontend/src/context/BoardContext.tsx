@@ -8,7 +8,7 @@ export interface CellContextType {
 }
 
 const initialCellState: CellContextType = {
-	colour: 'white',
+	colour: '#a7bed9',
 	state: 'empty'
 }
 

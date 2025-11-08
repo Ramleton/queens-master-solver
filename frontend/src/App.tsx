@@ -5,7 +5,7 @@ import './App.css'
 import Cell from './components/Cell'
 import { useBoardContext } from './context/BoardContext'
 
-const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45', 'white'] as const
+const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45'] as const
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
@@ -24,29 +24,53 @@ function App() {
 		setChangeColour(prevColour => prevColour === colour ? null : colour)
 	}
 
+	const handleClear = () => {
+		setChangeColour(null)
+		setCells(Array.from({ length: rows })
+			.map(() => Array.from({ length: cols })
+				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
+	}
+
 	const handleSolve = () => {
 		solveMutation.mutate()
 	}
 
 	return (
-		<>
+		<div className='app-container'>
 			<h1>Queens Master Solver</h1>
-			<input
-				type='number'
-				value={rows}
-				onChange={e => setRows(parseInt(e.target.value))}
-				min={1}
-				max={10}
-			/>
-			<input
-				type='number'
-				value={cols}
-				onChange={e => setCols(parseInt(e.target.value))}
-				min={1}
-				max={10}
-			/>
+			<div className='grid-size-inputs'>
+				<label htmlFor='rows'>Rows</label>
+				<input
+					id='rows'
+					type='number'
+					className='grid-size-input'
+					value={rows}
+					onChange={e => {
+						const parsedValue = parseInt(e.target.value)
+						if (parsedValue)
+							setRows(parsedValue)
+					}}
+					min={4}
+					max={9}
+				/>
+				<label htmlFor='cols'>Columns</label>
+				<input
+					id='cols'
+					type='number'
+					className='grid-size-input'
+					value={cols}
+					onChange={e => {
+						const parsedValue = parseInt(e.target.value)
+						if (parsedValue)
+							setCols(parsedValue)
+					}}
+					min={4}
+					max={9}
+				/>
+				<button className='clear-button' type='button' onClick={() => handleClear()}>Clear</button>
+			</div>
 			<div
-				className='grid'
+				className='grid-container grid'
 				style={{
 					'--row': rows,
 					'--col': cols
@@ -65,22 +89,24 @@ function App() {
 					))
 				}
 			</div>
-			<h2>Colours</h2>
-			<div className='colours-flex'>
-				{COLOURS.map((colour, index) => (
-					// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-					<div
-						key={index}
-						className={`colour-cell ${changeColour === colour ? 'selected' : ''} square`}
-						style={{
-							'--colour': colour
-						} as React.CSSProperties}
-						onClick={() => handleClickColourCell(colour)}
-					/>
-				))}
+			<div className='colours-container'>
+				<h2>Colours</h2>
+				<div className='colours-flex'>
+					{COLOURS.map((colour, index) => (
+						// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+						<div
+							key={index}
+							className={`colour-cell ${changeColour === colour ? 'selected' : ''} square`}
+							style={{
+								'--colour': colour
+							} as React.CSSProperties}
+							onClick={() => handleClickColourCell(colour)}
+						/>
+					))}
+				</div>
 			</div>
-			<button type='button' onClick={handleSolve}>Solve</button>
-		</>
+			<button className='solve-button' type='button' onClick={handleSolve}>Solve</button>
+		</div>
 	)
 }
 
