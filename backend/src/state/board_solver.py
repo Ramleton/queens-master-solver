@@ -220,11 +220,12 @@ class BoardSolver:
 				rows_to_check.add(row)
 		return rows_to_check
 	
-	def _check_columns(self):
+	def _compare_columns(self):
 		sorted_colours = self._sort_by_least()
 		while sorted_colours:
 			colour = sorted_colours.pop(0)
 			columns_to_check = self._find_columns_to_compare(colour)
+			# Move on if there are no columns to check
 			if not len(columns_to_check):
 				continue
 			num_supersets = 1 # The colour itself is a superset
@@ -243,11 +244,12 @@ class BoardSolver:
 						if column in columns_to_check:
 							self._mark_cell_as_marked(row, column)
 	
-	def _check_rows(self):
+	def _compare_rows(self):
 		sorted_colours = self._sort_by_least()
 		while sorted_colours:
 			colour = sorted_colours.pop(0)
 			rows_to_check = self._find_rows_to_compare(colour)
+			# Move on if there are no rows to check
 			if not len(rows_to_check):
 				continue
 			num_supersets = 1 # The colour itself is a superset
@@ -271,8 +273,8 @@ class BoardSolver:
 		self._check_colour_row()
 		self._check_colour_column()
 		self._check_cells_iterative()
-		self._check_columns()
-		self._check_rows()
+		self._compare_columns()
+		self._compare_rows()
 	
 	def solve(self):
 		self._check_queens()
