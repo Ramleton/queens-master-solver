@@ -16,11 +16,10 @@ function App() {
 		onSuccess: response => {
 			console.log('Solved!')
 			setChangeColour(null)
-			const lastStep = response.steps.pop()
+			const lastStep = response.pop()
 			if (!lastStep) return
-			setCells(lastStep[0])
-			response.steps.push(lastStep)
-			console.log(response.steps)
+			setCells(lastStep.grid)
+			response.push(lastStep)
 		}
 	})
 
@@ -79,8 +78,8 @@ function App() {
 					min={4}
 					max={9}
 				/>
-				<button className='clear-button' type='button' onClick={() => handleClear()}>Clear</button>
 				<button className='empty-button' type='button' onClick={() => handleEmpty()}>Empty</button>
+				<button className='clear-button' type='button' onClick={() => handleClear()}>Clear</button>
 			</div>
 			<div
 				className='grid-container grid'
