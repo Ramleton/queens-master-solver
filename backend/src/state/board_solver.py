@@ -159,7 +159,7 @@ class BoardSolver:
 				self.solution_steps.append((
 					self.board.clone().grid,
 					CellState.MARKED,
-					f"Cell in same row as the queen on ({row}, {col})"
+					f"Cell in the same row as the Queen on ({row}, {col})"
 				))
 	
 	def _mark_cells_in_same_column(self, row: int, col: int):
@@ -174,7 +174,7 @@ class BoardSolver:
 				self.solution_steps.append((
 					self.board.clone().grid,
 					CellState.MARKED,
-					f"Cell in same column as the queen on ({row}, {col})"
+					f"Cell in the same column as the Queen on ({row}, {col})"
 				))
 
 	def _mark_cells_surrounding_cell(self, row: int, col: int):
