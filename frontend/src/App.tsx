@@ -14,7 +14,6 @@ function App() {
 	const solveMutation = useMutation({
 		mutationFn: async () => await solve(rows, cols, cells),
 		onSuccess: response => {
-			console.log('Solved!')
 			setChangeColour(null)
 			const lastStep = response.pop()
 			if (!lastStep) return

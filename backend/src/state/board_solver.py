@@ -454,17 +454,17 @@ class BoardSolver:
 			# Move on if there are no columns to check
 			if not len(group_to_check):
 				continue
-			num_same = 1 # The number of sets we encounter that are equivalent
+			same_colours = [colour]
 			extra_colours = set()
 			for o_colour in sorted_colours:
 				o_group_to_check = self._find_group_to_compare(o_colour, axis)
 				if group_to_check == o_group_to_check:
-					num_same += 1
+					same_colours.append(o_colour)
 				elif o_group_to_check.intersection(group_to_check):
 					extra_colours.add(o_colour)
 			# Move on if the number of colours with equivalent sets isn't equal
 			# to the number of rows/columns to check
-			if num_same != len(group_to_check):
+			if len(same_colours) != len(group_to_check):
 				continue
 			# Mark the cells of the colours in the extra colours with matching rows/columns
 			for o_colour in extra_colours:
@@ -474,14 +474,18 @@ class BoardSolver:
 						self.solution_steps.append((
 							self.board.clone().grid,
 							CellState.MARKED, 
-							f"Marked cell on ({row}, {column}) since there are too many colours in the same column"
+							f"Marked cell on ({row}, {column}) since there are too "\
+								+ f"many colours in the same column(s) as the "\
+								+ f"remaining cells of colour(s) {same_colours}"
 						))
 					elif axis == 0 and row in group_to_check:
 						self._mark_cell_as_marked(row, column)
 						self.solution_steps.append((
 							self.board.clone().grid,
 							CellState.MARKED, 
-							f"Marked cell on ({row}, {column}) since there are too many colours in the same row"
+							f"Marked cell on ({row}, {column}) since there are too "\
+							+ f" many colours in the same row(s) as the "\
+							+ f"remaining cells of colour(s) {same_colours}"
 						))
 
 	def _check_steps(self):
