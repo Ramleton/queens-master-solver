@@ -11,14 +11,14 @@ class SolveRequest(Schema):
 	cols: int
 	grid: list[list[Cell]]
 
-class SolveResponse(Schema):
+class GridState(Schema):
 	grid: list[list[Cell]]
 	state: CellState
 	message: str
 
 @api.post("/solve")
-def solve(request, body: SolveRequest) -> list[SolveResponse]:
+def solve(request, body: SolveRequest) -> list[GridState]:
 	board = Board(body.rows, body.cols, body.grid)
 	solution = BoardSolver(board).solve()
-	return [SolveResponse(grid=step[0], state=step[1], message=step[2]) for step in solution]
+	return [GridState(grid=step[0], state=step[1], message=step[2]) for step in solution]
 	
