@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { solve } from './api/board'
 import './App.css'
 import Cell from './components/Cell'
 import { useBoardContext } from './context/BoardContext'
+import { useReplay } from './hooks/useReplay'
 import type { GridState } from './types/boardTypes'
 import { parseReplayMessage } from './utils/appUtils'
 
@@ -11,30 +12,20 @@ const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
-	const [isReplaying, setIsReplaying] = useState<boolean>(false)
-	const [currStepIndex, setCurrStepIndex] = useState<number>(-1)
 	const [steps, setSteps] = useState<GridState[]>([])
 	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
+	const {
+		isReplaying,
+		currStepIndex,
+		startReplay,
+		pauseReplay,
+		cancelReplay,
+		setCurrStepIndex
+	} = useReplay(steps, setCells)
 
 	const parsedSteps = useMemo(() => {
 		return steps.map(step => parseReplayMessage(step.message))
 	}, [steps])
-
-	useEffect(() => {
-		if (!isReplaying) return
-		if (currStepIndex >= steps.length) {
-			setIsReplaying(false)
-			return
-		}
-
-		setCells(steps[currStepIndex].grid)
-
-		const timeout = setTimeout(() => {
-			setCurrStepIndex(i => i + 1)
-		}, 1000)
-
-		return () => clearTimeout(timeout)
-	}, [isReplaying, currStepIndex, steps, setCells])
 
 	const solveMutation = useMutation({
 		mutationFn: async () => await solve(rows, cols, cells),
@@ -57,9 +48,8 @@ function App() {
 		setCells(Array.from({ length: rows })
 			.map(() => Array.from({ length: cols })
 				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
-		setIsReplaying(false)
+		cancelReplay()
 		setSteps([])
-		setCurrStepIndex(-1)
 	}
 
 	const handleEmpty = () => {
@@ -67,8 +57,7 @@ function App() {
 		setCells(cells.map(row => row.map(
 			cell => ({ ...cell, state: 'empty' })
 		)))
-		setIsReplaying(false)
-		setCurrStepIndex(-1)
+		cancelReplay()
 		setSteps([])
 	}
 
@@ -77,17 +66,7 @@ function App() {
 		setCells(cells.map(row => row.map(
 			cell => ({ ...cell, state: 'empty' })
 		)))
-		setCurrStepIndex(0)
-		setIsReplaying(true)
-	}
-
-	const handleCancelReplay = () => {
-		setIsReplaying(false)
-		setCurrStepIndex(-1)
-	}
-
-	const handlePauseReplay = () => {
-		setIsReplaying(!isReplaying)
+		startReplay()
 	}
 
 	const handleSolve = () => {
@@ -213,7 +192,7 @@ function App() {
 					<button
 						className='pause-replay-button'
 						type='button'
-						onClick={handlePauseReplay}
+						onClick={pauseReplay}
 					>
 						{isReplaying ? 'Pause Replay' : 'Resume Replay'}
 					</button>
@@ -222,7 +201,7 @@ function App() {
 					<button
 						className='cancel-replay-button'
 						type='button'
-						onClick={handleCancelReplay}
+						onClick={cancelReplay}
 						disabled={!isReplaying}
 					>
 						Cancel Replay
