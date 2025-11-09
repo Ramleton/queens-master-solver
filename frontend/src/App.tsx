@@ -1,15 +1,35 @@
 import { useMutation } from '@tanstack/react-query'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { solve } from './api/board'
 import './App.css'
 import Cell from './components/Cell'
 import { useBoardContext } from './context/BoardContext'
+import type { GridState } from './types/boardTypes'
 
 const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45'] as const
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
+	const [isReplaying, setIsReplaying] = useState<boolean>(false)
+	const [currStepIndex, setCurrStepIndex] = useState<number>(-1)
+	const [steps, setSteps] = useState<GridState[]>([])
 	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
+
+	useEffect(() => {
+		if (!isReplaying) return
+		if (currStepIndex >= steps.length) {
+			setIsReplaying(false)
+			return
+		}
+
+		setCells(steps[currStepIndex].grid)
+
+		const timeout = setTimeout(() => {
+			setCurrStepIndex(i => i + 1)
+		}, 1000)
+
+		return () => clearTimeout(timeout)
+	}, [isReplaying, currStepIndex, steps, setCells])
 
 	const solveMutation = useMutation({
 		mutationFn: async () => await solve(rows, cols, cells),
@@ -19,6 +39,7 @@ function App() {
 			if (!lastStep) return
 			setCells(lastStep.grid)
 			response.push(lastStep)
+			setSteps(response)
 		}
 	})
 
@@ -31,6 +52,8 @@ function App() {
 		setCells(Array.from({ length: rows })
 			.map(() => Array.from({ length: cols })
 				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
+		setSteps([])
+		setCurrStepIndex(-1)
 	}
 
 	const handleEmpty = () => {
@@ -39,10 +62,69 @@ function App() {
 			row.map(
 				cell => ({ ...cell, state: 'empty' })
 			)))
+		setCurrStepIndex(-1)
+	}
+
+	const handleReplay = () => {
+		handleEmpty()
+		setCurrStepIndex(0)
+		setIsReplaying(true)
+	}
+
+	const handleCancelReplay = () => {
+		setIsReplaying(false)
+		setCurrStepIndex(-1)
+	}
+
+	const handlePauseReplay = () => {
+		setIsReplaying(!isReplaying)
 	}
 
 	const handleSolve = () => {
 		solveMutation.mutate()
+	}
+
+	const replayStepMessage = () => {
+		if (currStepIndex >= steps.length) return 'Done!'
+		if (steps[currStepIndex].message.includes('[')) {
+			const splitMessage = steps[currStepIndex].message.split('[')
+			const colours = splitMessage[1]
+				.split(', ')
+				.map(colour => colour.replaceAll('\'', '').replace(']', ''))
+			const message = colours.length === 1
+				? splitMessage[0].replaceAll('(s)', '')
+				: splitMessage[0].slice(0, splitMessage[0].indexOf(')') + 1) + splitMessage[0]
+					.slice(splitMessage[0].indexOf(')') + 1)
+					.replaceAll('(', '')
+					.replaceAll(')', '')
+			return (
+				<span>
+					{`Step ${currStepIndex + 1}: ${message}`}
+
+					<span className='colour-list'>
+						{colours.map(colour => (
+							<span
+								key={colour}
+								className='colour-circle'
+								style={{ backgroundColor: colour }}
+							/>
+						))}
+					</span>
+				</span>
+			)
+		} else if (steps[currStepIndex].message.includes('#')) {
+			const idxOfHashtag = steps[currStepIndex].message.indexOf('#')
+			const colour = steps[currStepIndex].message.slice(idxOfHashtag, idxOfHashtag + 7)
+			const messageParts = steps[currStepIndex].message.split(colour)
+			return (
+				<span>
+					{`Step ${currStepIndex + 1}: ${messageParts[0]}`}
+					<span className='colour-list colour-circle' style={{ backgroundColor: colour }} />
+					{messageParts[1]}
+				</span>
+			)
+		}
+		return <span>{`Step ${currStepIndex + 1}: ${steps[currStepIndex].message}`}</span>
 	}
 
 	return (
@@ -57,8 +139,10 @@ function App() {
 					value={rows}
 					onChange={e => {
 						const parsedValue = parseInt(e.target.value)
-						if (parsedValue)
-							setRows(parsedValue)
+						if (!parsedValue) return
+						setSteps([])
+						setCurrStepIndex(-1)
+						setRows(parsedValue)
 					}}
 					min={4}
 					max={9}
@@ -71,8 +155,10 @@ function App() {
 					value={cols}
 					onChange={e => {
 						const parsedValue = parseInt(e.target.value)
-						if (parsedValue)
-							setCols(parsedValue)
+						if (!parsedValue) return
+						setSteps([])
+						setCurrStepIndex(-1)
+						setCols(parsedValue)
 					}}
 					min={4}
 					max={9}
@@ -116,7 +202,44 @@ function App() {
 					))}
 				</div>
 			</div>
-			<button className='solve-button' type='button' onClick={handleSolve}>Solve</button>
+			<div className='solve-container'>
+				<button
+					className='solve-button'
+					type='button'
+					onClick={handleSolve}
+					disabled={solveMutation.isPending || steps.length > 0}
+				>Solve
+				</button>
+				{steps.length > 0 && (
+					<button
+						className='replay-button'
+						type='button'
+						onClick={handleReplay}
+					>
+						{(currStepIndex > 0 ? 'Restart ' : '') + 'Replay'}
+					</button>
+				)}
+				{currStepIndex >= 0 && currStepIndex < steps.length && (
+					<button
+						className='pause-replay-button'
+						type='button'
+						onClick={handlePauseReplay}
+					>
+						{isReplaying ? 'Pause Replay' : 'Resume Replay'}
+					</button>
+				)}
+				{currStepIndex >= 0 && currStepIndex < steps.length && (
+					<button
+						className='cancel-replay-button'
+						type='button'
+						onClick={handleCancelReplay}
+						disabled={!isReplaying}
+					>
+						Cancel Replay
+					</button>
+				)}
+			</div>
+			{currStepIndex >= 0 && <p className='replay-message'>{replayStepMessage()}</p>}
 		</div>
 	)
 }

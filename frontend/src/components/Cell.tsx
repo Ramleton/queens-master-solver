@@ -1,4 +1,5 @@
-import { useBoardContext, type CellState } from '../context/BoardContext'
+import { useBoardContext } from '../context/BoardContext'
+import type { CellState } from '../types/boardTypes'
 import marked from '/marked.png'
 import queen from '/queen_2.png'
 

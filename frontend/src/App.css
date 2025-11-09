@@ -96,7 +96,7 @@ body {
 .grid {
 	display: grid;
 	grid-template-columns: repeat(var(--col), 1fr);
-	gap: 3px;
+	gap: 4px;
 }
 
 .square {
@@ -158,16 +158,19 @@ body {
 	border: 1px solid black;
 }
 
-.clear-button {
-	background-color: #c2658b;
-	&:hover {
-		background-color: #bd5f86;
-	};
+button {
 	cursor: pointer;
 	padding: 0.5rem 1rem;
 	font-size: 1rem;
 	border-radius: 4px;
 	color: white;
+}
+
+.clear-button {
+	background-color: #9178d0;
+	&:hover {
+		background-color: #876fc5;
+	};
 }
 
 .empty-button {
@@ -175,21 +178,64 @@ body {
 	&:hover {
 		background-color: #95adc9;
 	};
-	cursor: pointer;
-	padding: 0.5rem 1rem;
-	font-size: 1rem;
-	border-radius: 4px;
-	color: white;
+}
+
+.solve-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 1rem;
 }
 
 .solve-button {
-	padding: 0.5rem 1rem;
 	background-color: #6082b5;
-	color: white;
-	border-radius: 4px;
 	&:hover {
 		background-color: #5374a5;
-		cursor: pointer;
-	}
-	font-size: 2rem;
+	};
+}
+
+.replay-button {
+	background-color: #acd995;
+	&:hover {
+		background-color: #9dc8a0;
+	};
+}
+
+.pause-replay-button {
+	background-color: #e6a8c0;
+	&:hover {
+		background-color: #e3a1b8;
+	};
+}
+
+.cancel-replay-button {
+	background-color: #c2658b;
+	&:hover {
+		background-color: #bd5f86;
+	};
+}
+
+.replay-message {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
+.colour-list {
+	display: inline-flex;
+	gap: 6px;
+	margin-left: 5px;
+	margin-right: 5px;
+	vertical-align: middle;
+}
+
+.colour-circle {
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 50%;
+	display: inline-block;
+	border: 1px solid #333;
 }
