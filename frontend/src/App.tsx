@@ -16,7 +16,11 @@ function App() {
 		onSuccess: response => {
 			console.log('Solved!')
 			setChangeColour(null)
-			setCells(response)
+			const lastStep = response.steps.pop()
+			if (!lastStep) return
+			setCells(lastStep[0])
+			response.steps.push(lastStep)
+			console.log(response.steps)
 		}
 	})
 
@@ -29,6 +33,14 @@ function App() {
 		setCells(Array.from({ length: rows })
 			.map(() => Array.from({ length: cols })
 				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
+	}
+
+	const handleEmpty = () => {
+		setChangeColour(null)
+		setCells(cells.map(row =>
+			row.map(
+				cell => ({ ...cell, state: 'empty' })
+			)))
 	}
 
 	const handleSolve = () => {
@@ -68,6 +80,7 @@ function App() {
 					max={9}
 				/>
 				<button className='clear-button' type='button' onClick={() => handleClear()}>Clear</button>
+				<button className='empty-button' type='button' onClick={() => handleEmpty()}>Empty</button>
 			</div>
 			<div
 				className='grid-container grid'

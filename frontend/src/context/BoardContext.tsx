@@ -1,6 +1,5 @@
 import React from 'react'
-
-export type CellState = 'empty' | 'queen' | 'marked'
+import type { CellState } from '../types/boardTypes'
 
 export interface CellContextType {
 	colour: string

@@ -162,8 +162,20 @@ body {
 	background-color: #c2658b;
 	&:hover {
 		background-color: #bd5f86;
-		cursor: pointer;
 	};
+	cursor: pointer;
+	padding: 0.5rem 1rem;
+	font-size: 1rem;
+	border-radius: 4px;
+	color: white;
+}
+
+.empty-button {
+	background-color: #a7bed9;
+	&:hover {
+		background-color: #95adc9;
+	};
+	cursor: pointer;
 	padding: 0.5rem 1rem;
 	font-size: 1rem;
 	border-radius: 4px;
