@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { solve } from './api/board'
 import './App.css'
 import Cell from './components/Cell'
 import { useBoardContext } from './context/BoardContext'
 import type { GridState } from './types/boardTypes'
+import { parseReplayMessage } from './utils/appUtils'
 
 const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45'] as const
 
@@ -14,6 +15,10 @@ function App() {
 	const [currStepIndex, setCurrStepIndex] = useState<number>(-1)
 	const [steps, setSteps] = useState<GridState[]>([])
 	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
+
+	const parsedSteps = useMemo(() => {
+		return steps.map(step => parseReplayMessage(step.message))
+	}, [steps])
 
 	useEffect(() => {
 		if (!isReplaying) return
@@ -52,21 +57,26 @@ function App() {
 		setCells(Array.from({ length: rows })
 			.map(() => Array.from({ length: cols })
 				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
+		setIsReplaying(false)
 		setSteps([])
 		setCurrStepIndex(-1)
 	}
 
 	const handleEmpty = () => {
 		setChangeColour(null)
-		setCells(cells.map(row =>
-			row.map(
-				cell => ({ ...cell, state: 'empty' })
-			)))
+		setCells(cells.map(row => row.map(
+			cell => ({ ...cell, state: 'empty' })
+		)))
+		setIsReplaying(false)
 		setCurrStepIndex(-1)
+		setSteps([])
 	}
 
 	const handleReplay = () => {
-		handleEmpty()
+		setChangeColour(null)
+		setCells(cells.map(row => row.map(
+			cell => ({ ...cell, state: 'empty' })
+		)))
 		setCurrStepIndex(0)
 		setIsReplaying(true)
 	}
@@ -86,21 +96,13 @@ function App() {
 
 	const replayStepMessage = () => {
 		if (currStepIndex >= steps.length) return 'Done!'
-		if (steps[currStepIndex].message.includes('[')) {
-			const splitMessage = steps[currStepIndex].message.split('[')
-			const colours = splitMessage[1]
-				.split(', ')
-				.map(colour => colour.replaceAll('\'', '').replace(']', ''))
-			const message = colours.length === 1
-				? splitMessage[0].replaceAll('(s)', '')
-				: splitMessage[0].slice(0, splitMessage[0].indexOf(')') + 1) + splitMessage[0]
-					.slice(splitMessage[0].indexOf(')') + 1)
-					.replaceAll('(', '')
-					.replaceAll(')', '')
-			return (
-				<span>
-					{`Step ${currStepIndex + 1}: ${message}`}
 
+		const { message, colours } = parsedSteps[currStepIndex]
+
+		return (
+			<span className='replay-message'>
+				{`Step ${currStepIndex + 1}: ${message}`}
+				{colours.length > 0 && (
 					<span className='colour-list'>
 						{colours.map(colour => (
 							<span
@@ -110,21 +112,9 @@ function App() {
 							/>
 						))}
 					</span>
-				</span>
-			)
-		} else if (steps[currStepIndex].message.includes('#')) {
-			const idxOfHashtag = steps[currStepIndex].message.indexOf('#')
-			const colour = steps[currStepIndex].message.slice(idxOfHashtag, idxOfHashtag + 7)
-			const messageParts = steps[currStepIndex].message.split(colour)
-			return (
-				<span>
-					{`Step ${currStepIndex + 1}: ${messageParts[0]}`}
-					<span className='colour-list colour-circle' style={{ backgroundColor: colour }} />
-					{messageParts[1]}
-				</span>
-			)
-		}
-		return <span>{`Step ${currStepIndex + 1}: ${steps[currStepIndex].message}`}</span>
+				)}
+			</span>
+		)
 	}
 
 	return (
