@@ -1,4 +1,4 @@
-from src.state.board import Board, CellState
+from src.state.board import Board, Cell, CellState
 from src.state.axis import Axis
 
 class BoardSolver:
@@ -6,6 +6,7 @@ class BoardSolver:
 	unmarked_colour_dict: dict[str, list[tuple[int, int]]] # list(row, col)
 	colours_queen_dict: dict[str, bool]
 	colours_to_rc: dict[str, tuple[dict[int, int], dict[int, int]]]
+	solution_steps: list[tuple[list[list[Cell]], CellState, str]] # list(row, col, state, reason)
 
 	def __init__(self, board: Board) -> None:
 		"""
@@ -27,6 +28,7 @@ class BoardSolver:
 		self.unmarked_colour_dict = {}
 		self.colours_queen_dict = {}
 		self.colours_to_rc = {}
+		self.solution_steps = []
 		for row in range(self.board.rows):
 			for col in range(self.board.cols):
 				cell = self.board.grid[row][col]
@@ -154,6 +156,11 @@ class BoardSolver:
 		for other_col in range(self.board.cols):
 			if col != other_col and self._check_cell_empty(row, other_col):
 				self._mark_cell_as_marked(row, other_col)
+				self.solution_steps.append((
+					self.board.clone().grid,
+					CellState.MARKED,
+					f"Cell in same row as the queen on ({row}, {col})"
+				))
 	
 	def _mark_cells_in_same_column(self, row: int, col: int):
 		"""
@@ -164,6 +171,11 @@ class BoardSolver:
 		for other_row in range(self.board.rows):
 			if row != other_row and self._check_cell_empty(other_row, col):
 				self._mark_cell_as_marked(other_row, col)
+				self.solution_steps.append((
+					self.board.clone().grid,
+					CellState.MARKED,
+					f"Cell in same column as the queen on ({row}, {col})"
+				))
 
 	def _mark_cells_surrounding_cell(self, row: int, col: int):
 		"""
@@ -175,6 +187,11 @@ class BoardSolver:
 			for c in range(max(0, col - 1), min(self.board.cols, col + 2)):
 				if self._check_cell_empty(r, c):
 					self._mark_cell_as_marked(r, c)
+					self.solution_steps.append((
+						self.board.clone().grid,
+						CellState.MARKED,
+						f"Cell adjacent to the queen on ({row}, {col})"
+					))
 	
 	def _mark_cells_of_same_colour(self, colour: str):
 		"""
@@ -193,6 +210,11 @@ class BoardSolver:
 		for (row, col) in list(self.unmarked_colour_dict[colour]):
 			if self._check_cell_empty(row, col):
 				self._mark_cell_as_marked(row, col)
+				self.solution_steps.append((
+					self.board.clone().grid,
+					CellState.MARKED,
+					f"Cell of the same colour as the queen on ({row}, {col})"
+				))
 
 	def _mark_cells_around_queen(self, row: int, col: int):
 		"""
@@ -235,6 +257,11 @@ class BoardSolver:
 			if len(self.unmarked_colour_dict[colour]) == 1:
 				(row, col) = self.unmarked_colour_dict[colour][0]
 				self._mark_cell_as_queen(row, col)
+				self.solution_steps.append((
+					self.board.clone().grid,
+					CellState.QUEEN, 
+					f"Queen in the only unmarked {colour} cell"
+				))
 				self._mark_cells_around_queen(row, col)
 	
 	def _snapshot(self):
@@ -248,7 +275,8 @@ class BoardSolver:
 			self.board.clone(),
 			{c: list(v) for c, v in self.unmarked_colour_dict.items()},
 			dict(self.colours_queen_dict),
-			{colour: (dict(r), dict(c)) for colour, (r, c) in self.colours_to_rc.items()}
+			{colour: (dict(r), dict(c)) for colour, (r, c) in self.colours_to_rc.items()},
+			list(self.solution_steps)
 		)
 
 	def _restore(self, snapshot):
@@ -258,13 +286,14 @@ class BoardSolver:
 		Parameters:
 			snapshot (Board): The snapshot to restore the board state from.
 		"""
-		board_copy, unmarked, queens, rc = snapshot
+		board_copy, unmarked, queens, rc, steps = snapshot
 		self.board.restore_from(board_copy)
 		self.unmarked_colour_dict = unmarked
 		self.colours_queen_dict = queens
 		self.colours_to_rc = rc
+		self.solution_steps = steps
 	
-	def _check_backtrack_queen_conflicts(self, row: int, col: int):
+	def _check_backtrack_queen_conflicts(self, row: int, col: int) -> bool:
 		"""
 		Checks if marking a cell as a queen would cause a conflict through potential backtracking.
 		
@@ -276,6 +305,9 @@ class BoardSolver:
 		
 		Raises:
 			ValueError: If marking the cell as a queen would cause a conflict.
+		
+		Returns:
+			bool: True if marking the cell as a queen would cause a conflict, False otherwise.
 		"""
 		# Snapshot current state
 		snapshot = self._snapshot()
@@ -283,6 +315,11 @@ class BoardSolver:
 		try:
 			# Attempt to proceed
 			self._mark_cell_as_queen(row, col)
+			self.solution_steps.append((
+				self.board.clone().grid,
+				CellState.QUEEN, 
+				f"Placing Queen on ({row}, {col}) and using backtracking to determine correct placement"
+			))
 			self._check_steps()
 			# Check if a colour has no unmarked cells and has no queens
 			# If so, this is a conflict
@@ -293,6 +330,13 @@ class BoardSolver:
 			# Marking the cell as a queen would cause a conflict
 			self._restore(snapshot)
 			self._mark_cell_as_marked(row, col)
+			self.solution_steps.append((
+				self.board.grid,
+				CellState.MARKED, 
+				f"Marked cell on ({row}, {col}) after determining it cannot be a Queen through backtracking"
+			))
+			return True
+		return False
 
 	def _check_queen_would_conflict(self, row: int, col: int):
 		"""
@@ -334,11 +378,27 @@ class BoardSolver:
 		for colour in unmarked_colours:
 			if not self.colours_queen_dict[colour] and not len(unmarked_colours[colour]):
 				self._mark_cell_as_marked(row, col)
+				self.solution_steps.append((
+					self.board.clone().grid,
+					CellState.MARKED, 
+					f"Marked cell on ({row}, {col}) after determining it cannot be a Queen"
+				))
 				# Check if there is a single unmarked colour before iterating again
 				# This is to prevent accidentally removing the only viable cell left of a colour
 				return self._check_steps()
-		
-		self._check_backtrack_queen_conflicts(row, col)
+	
+	def _check_cells_iterative_backtrack(self):
+		"""
+		Iterate over all empty cells and check if marking one as a queen would result in a conflict.
+		If so, mark the cell as marked.
+		This is to prevent accidentally removing the only viable cell left of a colour.
+		"""
+		for row in range(self.board.rows):
+			for col in range(self.board.cols):
+				if self._check_cell_empty(row, col):
+					# Use backtracking as little as possible, as its costly
+					if self._check_backtrack_queen_conflicts(row, col):
+						return
 
 	def _check_cells_iterative(self):
 		"""
@@ -411,8 +471,18 @@ class BoardSolver:
 				for (row, column) in list(self.unmarked_colour_dict[o_colour]):
 					if axis == 1 and column in group_to_check:
 						self._mark_cell_as_marked(row, column)
+						self.solution_steps.append((
+							self.board.clone().grid,
+							CellState.MARKED, 
+							f"Marked cell on ({row}, {column}) since there are too many colours in the same column"
+						))
 					elif axis == 0 and row in group_to_check:
 						self._mark_cell_as_marked(row, column)
+						self.solution_steps.append((
+							self.board.clone().grid,
+							CellState.MARKED, 
+							f"Marked cell on ({row}, {column}) since there are too many colours in the same row"
+						))
 
 	def _check_steps(self):
 		"""
@@ -448,3 +518,7 @@ class BoardSolver:
 		while prev_state != self._hash_state():
 			prev_state = self._hash_state()
 			self._check_steps()
+			# If the state hasn't changed, try using backtracking
+			if prev_state == self._hash_state():
+				self._check_cells_iterative_backtrack()
+		return self.solution_steps
