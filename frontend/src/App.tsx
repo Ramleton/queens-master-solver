@@ -202,7 +202,6 @@ function App() {
 						className='cancel-replay-button'
 						type='button'
 						onClick={cancelReplay}
-						disabled={!isReplaying}
 					>
 						Cancel Replay
 					</button>
