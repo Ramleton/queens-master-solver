@@ -487,6 +487,29 @@ class BoardSolver:
 							+ f" many colours in the same row(s) as the "\
 							+ f"remaining cells of colour(s) {same_colours}"
 						))
+	
+	def _check_cell_of_colour_within_range(self, colour: str, axis: Axis, i: int, num_groups_checking: int):
+		for cell in self.unmarked_colour_dict[colour]:
+			if i < cell[axis] or cell[axis] > i + num_groups_checking:
+				return False
+		return True
+	
+	def _compare_groups_2_helper(self, sorted_colours: list, axis: Axis, i: int, num_groups_checking: int) -> list[str]:
+		colours = []
+		for colour in sorted_colours:
+			if self._check_cell_of_colour_within_range(colour, axis, i, num_groups_checking):
+				colours.append(colour)
+		return colours
+	
+	def _compare_groups_2(self, axis: Axis):
+		sorted_colours = self._sort_by_least()
+		axis_length = self.board.rows if axis == Axis.ROW else self.board.cols
+		for num_groups_checking in range(axis_length):
+			for i in range(axis_length - num_groups_checking):
+				num_colours = 0
+				print(i, i + num_groups_checking, self._compare_groups_2_helper(sorted_colours, axis, i, num_groups_checking))
+
+
 
 	def _check_steps(self):
 		"""
@@ -518,11 +541,12 @@ class BoardSolver:
 		return tuple(tuple(cell.state for cell in row) for row in self.board.grid)
 	
 	def solve(self):
-		prev_state = None
-		while prev_state != self._hash_state():
-			prev_state = self._hash_state()
-			self._check_steps()
-			# If the state hasn't changed, try using backtracking
-			if prev_state == self._hash_state():
-				self._check_cells_iterative_backtrack()
+		self._compare_groups_2(Axis.ROW)
+		# prev_state = None
+		# while prev_state != self._hash_state():
+		# 	prev_state = self._hash_state()
+		# 	self._check_steps()
+		# 	# If the state hasn't changed, try using backtracking
+		# 	if prev_state == self._hash_state():
+		# 		self._check_cells_iterative_backtrack()
 		return self.solution_steps
