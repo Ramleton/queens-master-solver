@@ -406,10 +406,9 @@ class BoardSolver:
 		If so, mark the cell as marked.
 		This is to prevent accidentally removing the only viable cell left of a colour.
 		"""
-		for row in range(self.board.rows):
-			for col in range(self.board.cols):
-				if self._check_cell_empty(row, col):
-					self._check_queen_would_conflict(row, col)
+		for _, cells in dict(self.unmarked_colour_dict).items():
+			for cell in cells:
+				self._check_queen_would_conflict(cell[0], cell[1])
 	
 	def _sort_by_least(self):
 		"""
@@ -488,12 +487,19 @@ class BoardSolver:
 		Returns:
 			None
 		"""
-		self._check_queens()
-		self._check_single_colour()
-		self._compare_groups(Axis.ROW)
-		self._check_single_colour()
-		self._compare_groups(Axis.COLUMN)
-		self._check_single_colour()
+		prev_state = None
+		while prev_state != self._hash_state():
+			prev_state = self._hash_state()
+			self._check_queens()
+			self._check_single_colour()
+			if prev_state == self._hash_state():
+				self._compare_groups(Axis.ROW)
+			if prev_state == self._hash_state():
+				self._compare_groups(Axis.COLUMN)
+			if prev_state == self._hash_state():
+				self._check_cells_iterative()
+			if prev_state == self._hash_state():
+				self._check_cells_iterative_backtrack()
 	
 	def _hash_state(self):
 		"""
@@ -508,13 +514,5 @@ class BoardSolver:
 		return tuple(tuple(cell.state for cell in row) for row in self.board.grid)
 	
 	def solve(self):
-		prev_state = None
-		while prev_state != self._hash_state():
-			prev_state = self._hash_state()
-			self._check_steps()
-			# If the state hasn't changed, try using backtracking
-			if prev_state == self._hash_state():
-				self._check_cells_iterative()
-			if prev_state == self._hash_state():
-				self._check_cells_iterative_backtrack()
+		self._check_steps()
 		return self.solution_steps
