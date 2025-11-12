@@ -421,95 +421,61 @@ class BoardSolver:
 		"""
 		return sorted(self.unmarked_colour_dict, key=lambda colour: len(self.unmarked_colour_dict[colour]))
 	
-	def _find_group_to_compare(self, colour: str, axis: Axis):
-		"""
-		Finds all positions along an axis that are available for a given
-		colour in a given axis.
-
-		Args:
-			colour (str): The colour to find available positions for.
-			axis (Axis): The axis to find available positions in.
-
-		Returns:
-			set: A set of all positions along the given axis that are
-			available for the given colour in the given axis.
-		"""
-		group_to_check = set()
-		for (value, number) in self.colours_to_rc[colour][axis].items():
-			if number:
-				group_to_check.add(value)
-		return group_to_check
-	
-	def _compare_groups(self, axis: Axis):
-		"""
-		If more colours share available positions than the number of positions
-		available, eliminate any colour that has alternative placements elsewhere.
-		This enforces mutually-exclusive column/row group constraints through
-		queen placement.
-		"""
-		sorted_colours = self._sort_by_least()
-		while sorted_colours:
-			colour = sorted_colours.pop(0)
-			group_to_check = self._find_group_to_compare(colour, axis)
-			# Move on if there are no columns to check
-			if not len(group_to_check):
-				continue
-			same_colours = [colour]
-			extra_colours = set()
-			for o_colour in sorted_colours:
-				o_group_to_check = self._find_group_to_compare(o_colour, axis)
-				if group_to_check == o_group_to_check:
-					same_colours.append(o_colour)
-				elif o_group_to_check.intersection(group_to_check):
-					extra_colours.add(o_colour)
-			# Move on if the number of colours with equivalent sets isn't equal
-			# to the number of rows/columns to check
-			if len(same_colours) != len(group_to_check):
-				continue
-			# Mark the cells of the colours in the extra colours with matching rows/columns
-			for o_colour in extra_colours:
-				for (row, column) in list(self.unmarked_colour_dict[o_colour]):
-					if axis == 1 and column in group_to_check:
-						self._mark_cell_as_marked(row, column)
-						self.solution_steps.append((
-							self.board.clone().grid,
-							CellState.MARKED, 
-							f"Marked cell on ({row}, {column}) since there are too "\
-								+ f"many colours in the same column(s) as the "\
-								+ f"remaining cells of colour(s) {same_colours}"
-						))
-					elif axis == 0 and row in group_to_check:
-						self._mark_cell_as_marked(row, column)
-						self.solution_steps.append((
-							self.board.clone().grid,
-							CellState.MARKED, 
-							f"Marked cell on ({row}, {column}) since there are too "\
-							+ f" many colours in the same row(s) as the "\
-							+ f"remaining cells of colour(s) {same_colours}"
-						))
-	
-	def _check_cell_of_colour_within_range(self, colour: str, axis: Axis, i: int, num_groups_checking: int):
+	def _check_cells_of_colour_within_range(self, colour: str, axis: Axis, i: int, num_groups_checking: int):
+		if not self.unmarked_colour_dict[colour]:
+			return False
 		for cell in self.unmarked_colour_dict[colour]:
-			if i < cell[axis] or cell[axis] > i + num_groups_checking:
+			if i > cell[axis] or cell[axis] >= i + num_groups_checking:
 				return False
 		return True
 	
-	def _compare_groups_2_helper(self, sorted_colours: list, axis: Axis, i: int, num_groups_checking: int) -> list[str]:
-		colours = []
+	def _compare_groups_helper(self, sorted_colours: list, axis: Axis, i: int, num_groups_checking: int) -> tuple[list[str], list[str]]:
+		in_range, not_in_range = [], []
 		for colour in sorted_colours:
-			if self._check_cell_of_colour_within_range(colour, axis, i, num_groups_checking):
-				colours.append(colour)
-		return colours
+			if self._check_cells_of_colour_within_range(colour, axis, i, num_groups_checking):
+				in_range.append(colour)
+			else:
+				not_in_range.append(colour)
+		return in_range, not_in_range
 	
-	def _compare_groups_2(self, axis: Axis):
+	def _compare_groups_marking_helper(
+		self,
+		i: int,
+		num_groups_checking: int,
+		axis: Axis,
+		in_range: list[str],
+		not_in_range: list[str]
+	):
+		for colour in not_in_range:
+			remaining_cells = list(self.unmarked_colour_dict[colour])
+			for (r, c) in remaining_cells:
+				if axis == 0 and r in range(i, i + num_groups_checking):
+					self._mark_cell_as_marked(r, c)
+					self.solution_steps.append((
+						self.board.clone().grid,
+						CellState.MARKED, 
+						f"Marked cell on ({r}, {c}) since there are too "\
+						+ f" many colours in the same row(s) as the "\
+						+ f"remaining cells of colour(s) {in_range}"
+					))
+				elif axis == 1 and c in range(i, i + num_groups_checking):
+					self._mark_cell_as_marked(r, c)
+					self.solution_steps.append((
+						self.board.clone().grid,
+						CellState.MARKED, 
+						f"Marked cell on ({r}, {c}) since there are too "\
+						+ f" many colours in the same column(s) as the "\
+						+ f"remaining cells of colour(s) {in_range}"
+					))
+	
+	def _compare_groups(self, axis: Axis):
 		sorted_colours = self._sort_by_least()
 		axis_length = self.board.rows if axis == Axis.ROW else self.board.cols
-		for num_groups_checking in range(axis_length):
-			for i in range(axis_length - num_groups_checking):
-				num_colours = 0
-				print(i, i + num_groups_checking, self._compare_groups_2_helper(sorted_colours, axis, i, num_groups_checking))
-
-
+		for num_groups_checking in range(1, axis_length):
+			for i in range(axis_length + 1 - num_groups_checking):
+				in_range, not_in_range = self._compare_groups_helper(sorted_colours, axis, i, num_groups_checking)
+				if len(in_range) == num_groups_checking:
+					self._compare_groups_marking_helper(i, num_groups_checking, axis, in_range, not_in_range)
 
 	def _check_steps(self):
 		"""
@@ -525,8 +491,9 @@ class BoardSolver:
 		self._check_queens()
 		self._check_single_colour()
 		self._compare_groups(Axis.ROW)
+		self._check_single_colour()
 		self._compare_groups(Axis.COLUMN)
-		self._check_cells_iterative()
+		self._check_single_colour()
 	
 	def _hash_state(self):
 		"""
@@ -541,12 +508,13 @@ class BoardSolver:
 		return tuple(tuple(cell.state for cell in row) for row in self.board.grid)
 	
 	def solve(self):
-		self._compare_groups_2(Axis.ROW)
-		# prev_state = None
-		# while prev_state != self._hash_state():
-		# 	prev_state = self._hash_state()
-		# 	self._check_steps()
-		# 	# If the state hasn't changed, try using backtracking
-		# 	if prev_state == self._hash_state():
-		# 		self._check_cells_iterative_backtrack()
+		prev_state = None
+		while prev_state != self._hash_state():
+			prev_state = self._hash_state()
+			self._check_steps()
+			# If the state hasn't changed, try using backtracking
+			if prev_state == self._hash_state():
+				self._check_cells_iterative()
+			if prev_state == self._hash_state():
+				self._check_cells_iterative_backtrack()
 		return self.solution_steps
