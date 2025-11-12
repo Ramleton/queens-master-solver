@@ -13,6 +13,9 @@ class Cell(BaseModel):
 
 	def __init__(self,  colour: str, state: CellState):
 		super().__init__(colour=colour, state=state)
+	
+	def clone(self) -> "Cell":
+		return Cell(colour=self.colour, state=self.state)
 
 	def __str__(self):
 		letter = " " if self.state == CellState.EMPTY else "X" if self.state == CellState.MARKED else "Q"
@@ -27,13 +30,11 @@ class Board(BaseModel):
 		super().__init__(rows=rows, cols=cols, grid=grid)
 	
 	def clone(self) -> "Board":
-		new_grid = [[Cell(cell.colour, cell.state) for cell in row] for row in self.grid]
+		new_grid = [[cell.clone() for cell in row] for row in self.grid]
 		return Board(rows=self.rows, cols=self.cols, grid=new_grid)
 
 	def restore_from(self, other: "Board"):
-		for r in range(self.rows):
-			for c in range(self.cols):
-				self.grid[r][c] = other.grid[r][c]
+		self.grid = [[cell.clone() for cell in row] for row in other.grid]
 	
 	def print(self) -> None:
 		for row in self.grid:

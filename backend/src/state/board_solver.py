@@ -276,7 +276,7 @@ class BoardSolver:
 			{c: list(v) for c, v in self.unmarked_colour_dict.items()},
 			dict(self.colours_queen_dict),
 			{colour: (dict(r), dict(c)) for colour, (r, c) in self.colours_to_rc.items()},
-			list(self.solution_steps)
+			[[[[cell.clone() for cell in row] for row in step[0]], step[1], step[2]] for step in self.solution_steps]
 		)
 
 	def _restore(self, snapshot):
@@ -331,84 +331,23 @@ class BoardSolver:
 			self._restore(snapshot)
 			self._mark_cell_as_marked(row, col)
 			self.solution_steps.append((
-				self.board.grid,
+				self.board.clone().grid,
 				CellState.MARKED, 
 				f"Marked cell on ({row}, {col}) after determining it cannot be a Queen through backtracking"
 			))
 			return True
 		return False
-
-	def _check_queen_would_conflict(self, row: int, col: int):
-		"""
-		Checks if a queen in position (row, col) would cause a conflict.
-		
-		A conflict occurs when a colour has no unmarked cells and has no queens.
-		
-		Returns early if a conflict is found to prevent unnecessary checks.
-		"""
-		# Skip cells already known to be non-viable
-		if not self._check_cell_empty(row, col):
-			return
-
-		# Check if there are any conflicts
-		unmarked_colours = {c: list(v) for c, v in self.unmarked_colour_dict.items()}
-		unmarked_colour_cells = {cell for cells in unmarked_colours.values() for cell in cells}
-		# Temporarily mark all cells in the same row
-		for c in range(self.board.cols):
-			if c != col and self._check_cell_empty(row, c):
-				unmarked_colours[self.board.grid[row][c].colour].remove((row, c))
-				unmarked_colour_cells.discard((row, c))
-		# Temporarily mark all cells in the same column
-		for r in range(self.board.rows):
-			if r != row and self._check_cell_empty(r, col):
-				unmarked_colours[self.board.grid[r][col].colour].remove((r, col))
-				unmarked_colour_cells.discard((r, col))
-		# Temporarily mark adjacent cells
-		for r in range(row - 1, row + 2):
-			for c in range(col - 1, col + 2):
-				if r < 0 or r >= self.board.rows or \
-					c < 0 or c >= self.board.cols:
-					continue
-				if (r, c) in unmarked_colour_cells and \
-					self.board.grid[r][c].colour != self.board.grid[row][col].colour:
-					unmarked_colours[self.board.grid[r][c].colour].remove((r, c))
-					unmarked_colour_cells.discard((r, c))
-		# Check if a colour has no unmarked cells and has no queens
-		# If so, this is a conflict
-		for colour in unmarked_colours:
-			if not self.colours_queen_dict[colour] and not len(unmarked_colours[colour]):
-				self._mark_cell_as_marked(row, col)
-				self.solution_steps.append((
-					self.board.clone().grid,
-					CellState.MARKED, 
-					f"Marked cell on ({row}, {col}) after determining it cannot be a Queen"
-				))
-				# Check if there is a single unmarked colour before iterating again
-				# This is to prevent accidentally removing the only viable cell left of a colour
-				return self._check_steps()
 	
 	def _check_cells_iterative_backtrack(self):
 		"""
 		Iterate over all empty cells and check if marking one as a queen would result in a conflict.
 		If so, mark the cell as marked.
-		This is to prevent accidentally removing the only viable cell left of a colour.
 		"""
-		for row in range(self.board.rows):
-			for col in range(self.board.cols):
-				if self._check_cell_empty(row, col):
-					# Use backtracking as little as possible, as its costly
-					if self._check_backtrack_queen_conflicts(row, col):
-						return
-
-	def _check_cells_iterative(self):
-		"""
-		Iterate over all empty cells and check if marking one as a queen would result in a conflict.
-		If so, mark the cell as marked.
-		This is to prevent accidentally removing the only viable cell left of a colour.
-		"""
-		for _, cells in dict(self.unmarked_colour_dict).items():
-			for cell in cells:
-				self._check_queen_would_conflict(cell[0], cell[1])
+		for colour in self._sort_by_least():
+			for cell in self.unmarked_colour_dict[colour]:
+				# Use backtracking as little as possible, as its costly
+				if self._check_backtrack_queen_conflicts(cell[0], cell[1]):
+					return
 	
 	def _sort_by_least(self):
 		"""
@@ -496,8 +435,6 @@ class BoardSolver:
 				self._compare_groups(Axis.ROW)
 			if prev_state == self._hash_state():
 				self._compare_groups(Axis.COLUMN)
-			if prev_state == self._hash_state():
-				self._check_cells_iterative()
 			if prev_state == self._hash_state():
 				self._check_cells_iterative_backtrack()
 	
