@@ -126,10 +126,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
 	"http://localhost:4173",
 	"http://localhost:5173",
+	"https://queens-master-solver-hj046ezrq-ishaan-sainis-projects.vercel.app/",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
 	"http://localhost:5173",
+	"https://queens-master-solver-hj046ezrq-ishaan-sainis-projects.vercel.app/",
 ]
