@@ -3,6 +3,8 @@ asgiref==3.10.0
 Django==5.2.8
 django-cors-headers==4.9.0
 django-ninja==1.4.5
+gunicorn==26.0.0
+packaging==26.2
 pydantic==2.12.4
 pydantic_core==2.41.5
 sqlparse==0.5.3
