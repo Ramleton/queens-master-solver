@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-)1*t0zucdlkf*ib31r0ppvh!o&6nk)^79aj@!!1r%_my%=z4@^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
 	'localhost',
@@ -128,6 +128,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
+	"http://localhost:4173",
 	"http://localhost:5173",
 	"https://queens-master-solver-hj046ezrq-ishaan-sainis-projects.vercel.app",
 	"https://queens-master-solver-git-dev-ishaan-sainis-projects.vercel.app",
