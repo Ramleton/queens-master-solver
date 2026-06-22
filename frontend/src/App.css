@@ -360,6 +360,36 @@ button {
   cursor: not-allowed;
 }
 
+.solve-container {
+    transition: opacity 0.3s ease;
+}
+
+.solve-container.fading {
+    opacity: 0;
+}
+
+.replay-button,
+.pause-replay-button,
+.cancel-replay-button {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.replay-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.solve-button,
+.empty-button,
+.clear-button {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .loading-message {
   font-size: 0.875rem;
   color: var(--text-muted);

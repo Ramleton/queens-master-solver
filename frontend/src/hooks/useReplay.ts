@@ -22,8 +22,12 @@ export function useReplay(steps: GridState[], setCells: (grid: GridState['grid']
 	}, [isReplaying, currStepIndex, steps, setCells])
 
 	const startReplay = useCallback(() => {
-		setCurrStepIndex(0)
-		setIsReplaying(true)
+		setIsReplaying(false)
+		setCurrStepIndex(-1)
+		setTimeout(() => {
+			setCurrStepIndex(0)
+			setIsReplaying(true)
+		}, 500)
 	}, [])
 
 	const pauseReplay = useCallback(() => {

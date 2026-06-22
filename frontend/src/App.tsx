@@ -24,6 +24,7 @@ function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
 	const [steps, setSteps] = useState<GridState[]>([])
 	const [solveError, setSolveError] = useState<string | null>(null)
+	const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
 	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
 	const {
 		isReplaying,
@@ -82,11 +83,13 @@ function App() {
 	}
 
 	const handleReplay = () => {
-		setChangeColour(null)
-		setCells(
-			cells.map(row => row.map(cell => ({ ...cell, state: 'empty' })))
-		)
-		startReplay()
+		setIsTransitioning(true)
+		setTimeout(() => {
+			setChangeColour(null)
+			setCells(cells.map(row => row.map(cell => ({ ...cell, state: 'empty' }))))
+			startReplay()
+			setIsTransitioning(false)
+		}, 300)
 	}
 
 	const handleSolve = () => {
@@ -215,7 +218,7 @@ function App() {
 					))}
 				</div>
 			</div>
-			<div className='solve-container'>
+			<div className={`solve-container ${isTransitioning} ? 'fading' : ''`}>
 				<button
 					className='solve-button'
 					type='button'
@@ -234,8 +237,9 @@ function App() {
 						className='replay-button'
 						type='button'
 						onClick={handleReplay}
+						disabled={isTransitioning}
 					>
-						{(currStepIndex > 0 ? 'Restart ' : '') + 'Replay'}
+						{(currStepIndex >= 0 ? 'Restart ' : '') + 'Replay'}
 					</button>
 				)}
 				{currStepIndex >= 0 && currStepIndex < steps.length && (
