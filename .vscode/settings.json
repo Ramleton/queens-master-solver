@@ -1,7 +1,6 @@
 {
-	"cSpell.words": [
-		"Colour",
-		"COLOURS",
-		"supersets"
-	]
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "editor.formatOnSave": true,
+  "cSpell.words": ["Colour", "COLOURS", "supersets"]
 }

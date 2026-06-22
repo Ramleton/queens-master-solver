@@ -8,7 +8,17 @@ import { useReplay } from './hooks/useReplay'
 import type { GridState } from './types/boardTypes'
 import { parseReplayMessage } from './utils/appUtils'
 
-const COLOURS = ['#c2658b', '#6082b5', '#acd995', '#a7bed9', '#47b3b0', '#67bce6', '#9178d0', '#e6a8c0', '#e2ba45'] as const
+const COLOURS = [
+	'#c2658b',
+	'#6082b5',
+	'#acd995',
+	'#a7bed9',
+	'#47b3b0',
+	'#67bce6',
+	'#9178d0',
+	'#e6a8c0',
+	'#e2ba45'
+] as const
 
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
@@ -40,32 +50,37 @@ function App() {
 	})
 
 	const handleClickColourCell = (colour: string) => {
-		setChangeColour(prevColour => prevColour === colour ? null : colour)
+		setChangeColour(prevColour => (prevColour === colour ? null : colour))
 	}
 
 	const handleClear = () => {
 		setChangeColour(null)
-		setCells(Array.from({ length: rows })
-			.map(() => Array.from({ length: cols })
-				.map(() => ({ colour: '#a7bed9', state: 'empty' }))))
+		setCells(
+			Array.from({ length: rows }).map(() =>
+				Array.from({ length: cols }).map(() => ({
+					colour: '#a7bed9',
+					state: 'empty'
+				}))
+			)
+		)
 		cancelReplay()
 		setSteps([])
 	}
 
 	const handleEmpty = () => {
 		setChangeColour(null)
-		setCells(cells.map(row => row.map(
-			cell => ({ ...cell, state: 'empty' })
-		)))
+		setCells(
+			cells.map(row => row.map(cell => ({ ...cell, state: 'empty' })))
+		)
 		cancelReplay()
 		setSteps([])
 	}
 
 	const handleReplay = () => {
 		setChangeColour(null)
-		setCells(cells.map(row => row.map(
-			cell => ({ ...cell, state: 'empty' })
-		)))
+		setCells(
+			cells.map(row => row.map(cell => ({ ...cell, state: 'empty' })))
+		)
 		startReplay()
 	}
 
@@ -98,7 +113,15 @@ function App() {
 
 	return (
 		<div className='app-container'>
-			<h1>Queens Master Solver</h1>
+			<div className='app-header'>
+				<a href='https://ishaansaini.dev' className='back-link'>
+					← ishaansaini.dev
+				</a>
+				<h1>Queens Master Solver</h1>
+				<p className='app-subtitle'>
+					Enter your board, pick region colours, then hit Solve.
+				</p>
+			</div>
 			<div className='grid-size-inputs'>
 				<label htmlFor='rows'>Rows</label>
 				<input
@@ -132,28 +155,40 @@ function App() {
 					min={4}
 					max={9}
 				/>
-				<button className='empty-button' type='button' onClick={() => handleEmpty()}>Empty</button>
-				<button className='clear-button' type='button' onClick={() => handleClear()}>Clear</button>
+				<button
+					className='empty-button'
+					type='button'
+					onClick={() => handleEmpty()}
+				>
+					Empty
+				</button>
+				<button
+					className='clear-button'
+					type='button'
+					onClick={() => handleClear()}
+				>
+					Clear
+				</button>
 			</div>
 			<div
 				className='grid-container grid'
-				style={{
-					'--row': rows,
-					'--col': cols
-				} as React.CSSProperties}
-			>
-				{
-					Array.from({ length: rows }).map((_, row) => (
-						Array.from({ length: cols }).map((_, col) => (
-							<Cell
-								key={`${row}-${col}`}
-								row={row}
-								col={col}
-								changeColour={changeColour}
-							/>
-						))
-					))
+				style={
+					{
+						'--row': rows,
+						'--col': cols
+					} as React.CSSProperties
 				}
+			>
+				{Array.from({ length: rows }).map((_, row) =>
+					Array.from({ length: cols }).map((_, col) => (
+						<Cell
+							key={`${row}-${col}`}
+							row={row}
+							col={col}
+							changeColour={changeColour}
+						/>
+					))
+				)}
 			</div>
 			<div className='colours-container'>
 				<h2>Colours</h2>
@@ -163,9 +198,11 @@ function App() {
 						<div
 							key={index}
 							className={`colour-cell ${changeColour === colour ? 'selected' : ''} square`}
-							style={{
-								'--colour': colour
-							} as React.CSSProperties}
+							style={
+								{
+									'--colour': colour
+								} as React.CSSProperties
+							}
 							onClick={() => handleClickColourCell(colour)}
 						/>
 					))}
@@ -177,8 +214,14 @@ function App() {
 					type='button'
 					onClick={handleSolve}
 					disabled={solveMutation.isPending || steps.length > 0}
-				>Solve
+				>
+					{solveMutation.isPending ? 'Solving...' : 'Solve'}
 				</button>
+				{solveMutation.isPending && (
+					<p className='loading-message'>
+						Crunching the board — this may take a moment...
+					</p>
+				)}
 				{steps.length > 0 && (
 					<button
 						className='replay-button'
@@ -207,7 +250,9 @@ function App() {
 					</button>
 				)}
 			</div>
-			{currStepIndex >= 0 && <p className='replay-message'>{replayStepMessage()}</p>}
+			{currStepIndex >= 0 && (
+				<p className='replay-message'>{replayStepMessage()}</p>
+			)}
 		</div>
 	)
 }
