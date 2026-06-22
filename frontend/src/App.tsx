@@ -23,6 +23,7 @@ const COLOURS = [
 function App() {
 	const [changeColour, setChangeColour] = useState<string | null>(null)
 	const [steps, setSteps] = useState<GridState[]>([])
+	const [solveError, setSolveError] = useState<string | null>(null)
 	const { rows, cols, cells, setRows, setCols, setCells } = useBoardContext()
 	const {
 		isReplaying,
@@ -46,6 +47,9 @@ function App() {
 			setCells(lastStep.grid)
 			response.push(lastStep)
 			setSteps(response)
+		},
+		onError: (error: Error) => {
+			setSolveError(error.message)
 		}
 	})
 
@@ -65,6 +69,7 @@ function App() {
 		)
 		cancelReplay()
 		setSteps([])
+		setSolveError(null)
 	}
 
 	const handleEmpty = () => {
@@ -85,6 +90,7 @@ function App() {
 	}
 
 	const handleSolve = () => {
+		setSolveError(null)
 		solveMutation.mutate()
 	}
 
@@ -170,6 +176,7 @@ function App() {
 					Clear
 				</button>
 			</div>
+			{solveError && <p className='error-message'>{solveError}</p>}
 			<div
 				className='grid-container grid'
 				style={

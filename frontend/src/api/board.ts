@@ -11,5 +11,9 @@ export async function solve(rows: number, cols: number, grid: CellContextType[][
 		},
 		body: JSON.stringify({ rows, cols, grid })
 	})
+	if (!response.ok) {
+		const error = await response.json() as { detail?: string }
+		throw new Error(error.detail ?? 'Failed to solve the board')
+	}
 	return response.json() as Promise<SolveResponse>
 }

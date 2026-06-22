@@ -1,5 +1,6 @@
 from typing import Any
 from ninja import NinjaAPI, Schema
+from ninja.errors import HttpError
 
 from src.state.board_solver import BoardSolver
 from src.state.board import Board, Cell, CellState
@@ -20,5 +21,7 @@ class GridState(Schema):
 def solve(request, body: SolveRequest) -> list[GridState]:
 	board = Board(body.rows, body.cols, body.grid)
 	solution = BoardSolver(board).solve()
+	if solution is None:
+		raise HttpError(422, "This board has no solution. Not every colour region has a valid queen placement.")
 	return [GridState(grid=step[0], state=step[1], message=step[2]) for step in solution]
 	

@@ -452,4 +452,8 @@ class BoardSolver:
 	
 	def solve(self):
 		self._check_steps()
+
+		for _, has_queen in self.colours_queen_dict.items():
+			if not has_queen:
+				return None
 		return self.solution_steps

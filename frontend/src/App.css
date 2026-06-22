@@ -439,7 +439,28 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+.error-message {
+    font-size: 0.875rem;
+    color: #DC2626;
+    background-color: #FFF5F5;
+    border: 1px solid #FECACA;
+    border-radius: var(--radius);
+    padding: 0.625rem 1rem;
+    max-width: 640px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
 /* Light/Dark Theme */
+
+@media (prefers-color-scheme: dark) {
+    .error-message {
+        background-color: #2D1515;
+        border-color: #7F1D1D;
+        color: #FCA5A5;
+    }
+}
 
 @media (prefers-color-scheme: dark) {
   :root {
