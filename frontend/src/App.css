@@ -557,3 +557,54 @@ button {
     border-color: rgba(255, 255, 255, 0.15);
   }
 }
+
+@media (max-width: 600px) {
+  .app-container {
+    padding: 1.5rem 1rem 3rem;
+    gap: 1rem;
+  }
+
+  .app-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .grid-container {
+    width: min(90vw, 65vh);
+    height: calc(min(90vw, 65vh) * var(--row) / var(--col));
+  }
+
+  .grid-size-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .grid-size-inputs label,
+  .grid-size-input {
+    flex-shrink: 0;
+  }
+
+  .empty-button,
+  .clear-button {
+    flex-basis: auto;
+    width: 100px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .colour-cell {
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+  }
+
+  button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .replay-message {
+    font-size: 0.8125rem;
+  }
+}
