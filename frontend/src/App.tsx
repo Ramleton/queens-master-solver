@@ -140,7 +140,7 @@ function App() {
 					value={rows}
 					onChange={e => {
 						const parsedValue = parseInt(e.target.value)
-						if (!parsedValue) return
+						if (isNaN(parsedValue) || parsedValue < 4 || parsedValue > 9) return
 						setSteps([])
 						setCurrStepIndex(-1)
 						setRows(parsedValue)
@@ -156,7 +156,7 @@ function App() {
 					value={cols}
 					onChange={e => {
 						const parsedValue = parseInt(e.target.value)
-						if (!parsedValue) return
+						if (isNaN(parsedValue) || parsedValue < 4 || parsedValue > 9) return
 						setSteps([])
 						setCurrStepIndex(-1)
 						setCols(parsedValue)
