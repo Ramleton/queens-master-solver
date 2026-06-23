@@ -54,6 +54,28 @@ function App() {
 		}
 	})
 
+	const handleDecrement = (arrangement: 'row' | 'col') => {
+		if (arrangement === 'row' && rows <= 4) return
+		if (arrangement === 'col' && cols <= 4) return
+		setSteps([])
+		setCurrStepIndex(-1)
+		if (arrangement === 'row')
+			setRows(rows - 1)
+		if (arrangement === 'col')
+			setCols(cols - 1)
+	}
+
+	const handleIncrement = (arrangement: 'row' | 'col') => {
+		if (arrangement === 'row' && rows >= 9) return
+		if (arrangement === 'col' && cols >= 9) return
+		setSteps([])
+		setCurrStepIndex(-1)
+		if (arrangement === 'row')
+			setRows(rows + 1)
+		if (arrangement === 'col')
+			setCols(cols + 1)
+	}
+
 	const handleClickColourCell = (colour: string) => {
 		setChangeColour(prevColour => (prevColour === colour ? null : colour))
 	}
@@ -133,37 +155,17 @@ function App() {
 			</div>
 			<div className='grid-size-inputs'>
 				<label htmlFor='rows'>Rows</label>
-				<input
-					id='rows'
-					type='number'
-					className='grid-size-input'
-					value={rows}
-					onChange={e => {
-						const parsedValue = parseInt(e.target.value)
-						if (!parsedValue) return
-						setSteps([])
-						setCurrStepIndex(-1)
-						setRows(parsedValue)
-					}}
-					min={4}
-					max={9}
-				/>
+				<div id='rows' className='stepper'>
+					<button type='button' onPointerDown={() => handleDecrement('row')}>−</button>
+					<span className='stepper-value'>{rows}</span>
+					<button type='button' onPointerDown={() => handleIncrement('row')}>+</button>
+				</div>
 				<label htmlFor='cols'>Columns</label>
-				<input
-					id='cols'
-					type='number'
-					className='grid-size-input'
-					value={cols}
-					onChange={e => {
-						const parsedValue = parseInt(e.target.value)
-						if (!parsedValue) return
-						setSteps([])
-						setCurrStepIndex(-1)
-						setCols(parsedValue)
-					}}
-					min={4}
-					max={9}
-				/>
+				<div id='cols' className='stepper'>
+					<button type='button' onPointerDown={() => handleDecrement('col')}>−</button>
+					<span className='stepper-value'>{cols}</span>
+					<button type='button' onPointerDown={() => handleIncrement('col')}>+</button>
+				</div>
 				<button
 					className='empty-button'
 					type='button'

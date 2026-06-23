@@ -204,6 +204,40 @@ body {
   flex-wrap: wrap;
 }
 
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    padding: 0.125rem;
+}
+
+.stepper button {
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    line-height: 1;
+    user-select: none;
+}
+
+.stepper button:hover {
+    background-color: var(--border);
+}
+
+.stepper-value {
+    min-width: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
 .grid-size-inputs label {
   font-size: 0.875rem;
   font-weight: 500;
